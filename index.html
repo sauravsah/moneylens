@@ -552,34 +552,6 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
       <div class="tx-list" id="txList"></div>
     </section>
   </section>
-</main>
-
-<button class="fab" id="fabBtn">+</button>
-
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h2 id="mTitle">Add transaction</h2>
-    <div class="field">
-      <div class="seg" id="segType">
-        <button data-t="expense" class="on exp">Expense</button>
-        <button data-t="income" class="inc">Income</button>
-      </div>
-    </div>
-    <div class="field"><label>Amount (&#8377;)</label><input id="mAmt" type="number" min="0" step="1" placeholder="0" inputmode="decimal"></div>
-    <div class="field"><label>Category</label><select id="mCat"></select></div>
-    <div class="field"><label>Date</label><input id="mDate" type="date"></div>
-    <div class="field"><label>Note</label><input id="mNote" type="text" placeholder="e.g. groceries at BigBasket" maxlength="80"></div>
-    <div class="acts">
-      <button class="danger" id="mDel" style="display:none">Delete</button>
-      <button class="ghost" id="mCancel">Cancel</button>
-      <button class="primary" id="mSave">Save</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-<div id="tip" style="position:fixed;z-index:150;background:rgba(18,23,40,.95);border:1px solid var(--line2);padding:7px 12px;border-radius:99px;font-size:12px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap"></div>
-
   <section class="feature" id="secSettings">
     <div class="fhead">
       <span class="eyebrow">06 &middot; Settings</span>
@@ -618,6 +590,33 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
       <div class="set-note" style="margin-top:16px">MoneyLens v3.7 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
     </section>
   </section>
+  </main>
+
+<button class="fab" id="fabBtn">+</button>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="mTitle">Add transaction</h2>
+    <div class="field">
+      <div class="seg" id="segType">
+        <button data-t="expense" class="on exp">Expense</button>
+        <button data-t="income" class="inc">Income</button>
+      </div>
+    </div>
+    <div class="field"><label>Amount (&#8377;)</label><input id="mAmt" type="number" min="0" step="1" placeholder="0" inputmode="decimal"></div>
+    <div class="field"><label>Category</label><select id="mCat"></select></div>
+    <div class="field"><label>Date</label><input id="mDate" type="date"></div>
+    <div class="field"><label>Note</label><input id="mNote" type="text" placeholder="e.g. groceries at BigBasket" maxlength="80"></div>
+    <div class="acts">
+      <button class="danger" id="mDel" style="display:none">Delete</button>
+      <button class="ghost" id="mCancel">Cancel</button>
+      <button class="primary" id="mSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="tip" style="position:fixed;z-index:150;background:rgba(18,23,40,.95);border:1px solid var(--line2);padding:7px 12px;border-radius:99px;font-size:12px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap"></div>
 
 <footer>Auto-synced from your Gmail bank alerts &middot; everything stays in this browser &middot; <button class="flink" id="alertBtn" style="background:none;border:0;padding:0;cursor:pointer;font:inherit">turn on alerts</button> &middot; <a class="flink" id="lnkSetup" href="#">setup</a> &middot; <a class="flink" id="lnkSms" href="#">SMS setup</a> &middot; <a class="flink" id="lnkSettings" href="#secSettings">settings</a> &middot; <a class="flink" id="lnkHome" href="#">home</a></footer>
 </div>

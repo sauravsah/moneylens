@@ -309,6 +309,22 @@ footer::before{content:'';width:8px;height:8px;border-radius:50%;background:var(
 .bud-guide{margin-bottom:14px;color:var(--mut);font-size:12.5px}
 .bud-guide b{color:var(--txt)}
 .bud .bsub{margin-top:6px;font-size:11.5px;color:var(--mut)}
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.set-box{display:flex;flex-direction:column;gap:6px}
+.set-box>label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut2)}
+.set-box input,.set-box select{background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--txt);padding:10px 12px;font:inherit;outline:none}
+.set-box input:focus,.set-box select:focus{border-color:var(--acc2)}
+.set-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.set-note{font-size:12px;color:var(--mut)}
+@media(max-width:640px){.set-grid{grid-template-columns:1fr}}
+body.light{
+  --bg:#f4f6fb; --bg2:#e9edf6;
+  --surface:rgba(15,23,42,.045); --surface2:rgba(15,23,42,.08);
+  --line:rgba(15,23,42,.1); --line2:rgba(15,23,42,.2);
+  --txt:#1a2233; --mut:#5a6478; --mut2:#828ca8;
+  --shadow:0 24px 70px -30px rgba(15,23,42,.28);
+}
+body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
 @media(max-width:640px){.bud-stats{grid-template-columns:1fr 1fr}}
 .btn2{padding:12px 22px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.06);color:var(--txt);cursor:pointer;font:600 13.5px Inter;transition:.2s}
 .btn2:hover{border-color:rgba(255,255,255,.3)}
@@ -522,7 +538,7 @@ footer::before{content:'';width:8px;height:8px;border-radius:50%;background:var(
     <div class="fhead">
       <span class="eyebrow">05 &middot; Transactions</span>
       <h2>Every rupee, tagged by you</h2>
-      <p class="fsub" id="txCount">New arrivals get highlighted. Tap a category chip to tag them in one tap.</p>
+      <p class="fsub" id="txCount">Tap any transaction to edit or delete it. New arrivals get highlighted for one-tap tagging.</p>
     </div>
     <section class="card">
       <div class="filters">
@@ -564,7 +580,46 @@ footer::before{content:'';width:8px;height:8px;border-radius:50%;background:var(
 <div id="toast"></div>
 <div id="tip" style="position:fixed;z-index:150;background:rgba(18,23,40,.95);border:1px solid var(--line2);padding:7px 12px;border-radius:99px;font-size:12px;font-weight:600;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap"></div>
 
-<footer>Auto-synced from your Gmail bank alerts &middot; everything stays in this browser &middot; <button class="flink" id="alertBtn" style="background:none;border:0;padding:0;cursor:pointer;font:inherit">turn on alerts</button> &middot; <a class="flink" id="lnkSetup" href="#">setup</a> &middot; <a class="flink" id="lnkSms" href="#">SMS setup</a> &middot; <a class="flink" id="lnkHome" href="#">home</a></footer>
+  <section class="feature" id="secSettings">
+    <div class="fhead">
+      <span class="eyebrow">06 &middot; Settings</span>
+      <h2>Tune the engine</h2>
+      <p class="fsub">Everything lives in this browser. Nothing leaves without you.</p>
+    </div>
+    <section class="card">
+      <div class="set-grid">
+        <div class="set-box"><label>Monthly take-home (&#8377;)</label><input id="setIncome" type="number" min="0" placeholder="e.g. 48000"></div>
+        <div class="set-box"><label>Cycle starts on</label><select id="setSalDay"></select></div>
+      </div>
+      <div class="set-box" style="margin-top:14px">
+        <label>Sync feed</label>
+        <div class="set-row"><input id="setFeed" type="url" placeholder="https://script.google.com/..." style="flex:1;min-width:220px"><button class="chip" id="setFeedSave">Save</button></div>
+        <div class="set-row" style="margin-top:8px"><button class="chip" id="setTest">Test connection</button><button class="chip" id="setSync">Sync now</button><span class="set-note" id="setSyncInfo"></span></div>
+      </div>
+      <div class="set-grid" style="margin-top:14px">
+        <div class="set-box"><label>Browser notifications</label><div class="set-row"><button class="chip" id="setNotif">Turn on</button></div></div>
+        <div class="set-box"><label>Theme</label><div class="set-row"><button class="chip" id="setTheme">Light</button></div></div>
+      </div>
+      <div class="set-box" style="margin-top:14px">
+        <label>Bank SMS (optional)</label>
+        <div class="set-row"><button class="chip" id="setSms">Read bank SMS setup</button><span class="set-note">Forwards each bank SMS from your phone into the feed. OTPs and promos are skipped automatically.</span></div>
+      </div>
+      <div class="set-box" style="margin-top:14px">
+        <label>Your data</label>
+        <div class="set-row">
+          <button class="chip" id="setExport">Export JSON</button>
+          <button class="chip" id="setCsv">Export CSV</button>
+          <label class="chip" for="setImport" style="cursor:pointer">Import JSON</label>
+          <input id="setImport" type="file" accept="application/json,.json" style="display:none">
+          <button class="chip" id="setClear">Clear local data</button>
+        </div>
+        <div class="set-note" id="setDataInfo" style="margin-top:6px"></div>
+      </div>
+      <div class="set-note" style="margin-top:16px">MoneyLens v3.7 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
+    </section>
+  </section>
+
+<footer>Auto-synced from your Gmail bank alerts &middot; everything stays in this browser &middot; <button class="flink" id="alertBtn" style="background:none;border:0;padding:0;cursor:pointer;font:inherit">turn on alerts</button> &middot; <a class="flink" id="lnkSetup" href="#">setup</a> &middot; <a class="flink" id="lnkSms" href="#">SMS setup</a> &middot; <a class="flink" id="lnkSettings" href="#secSettings">settings</a> &middot; <a class="flink" id="lnkHome" href="#">home</a></footer>
 </div>
 
 <script>
@@ -796,15 +851,17 @@ function countUp(el,target,suffix,pct){
   requestAnimationFrame(step);
 }
 
+function dlbl(c,p){if(!(p>0))return '';const d=Math.round((c-p)/p*100);return (d>=0?'+':'\u2212')+Math.abs(d)+'% vs last month'}
 function renderStats(){
   const key=state.ui.month,all=state.tx;
+  const pk=monthShift(key,-1),pinc=sum(t=>mKey(t.date)===pk&&t.type==='income'),pexp=sum(t=>mKey(t.date)===pk&&t.type==='expense');
   const bal=sum(t=>t.type==='income')-sum(t=>t.type==='expense');
   const inc=sum(t=>mKey(t.date)===key&&t.type==='income');
   const exp=sum(t=>mKey(t.date)===key&&t.type==='expense');
   const rate=inc>0?Math.max(0,(inc-exp)/inc*100):0;
   countUp($('sBal'),bal);countUp($('sInc'),inc);countUp($('sExp'),exp);countUp($('sSav'),rate,0,true);
-  $('sIncSub').textContent='in '+monthLabel(key);
-  $('sExpSub').textContent='in '+monthLabel(key);
+  $('sIncSub').textContent='in '+monthLabel(key)+(dlbl(inc,pinc)?' \u00b7 '+dlbl(inc,pinc):'');
+  $('sExpSub').textContent='in '+monthLabel(key)+(dlbl(exp,pexp)?' \u00b7 '+dlbl(exp,pexp):'');
   $('sSavSub').textContent=exp>0?fmt(exp)+' spent this month':'no spend yet';
   $('sBalSub').textContent='across '+(new Set(all.map(t=>mKey(t.date)))).size+' months';
   spark('sp0',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense');return i-e}));
@@ -1018,6 +1075,54 @@ function init(){
     Notification.requestPermission().then(np=>{syncAlertBtn();if(np==='granted')toast('Alerts on \u2014 pinged each time a new transaction lands')});
   };
   syncAlertBtn();
+
+  (function(){
+    const si=$('setIncome');
+    if(si){try{si.value=localStorage.getItem('ml_income')||''}catch(e){}
+      si.addEventListener('change',()=>{const v=Math.max(0,+si.value||0);try{localStorage.setItem('ml_income',String(v))}catch(e){}renderBudgets();toast(v?'Take-home saved':'Take-home cleared')});}
+    const ssd=$('setSalDay'),sd=$('salDay');
+    if(ssd&&sd){
+      for(let i=1;i<=28;i++){const o=document.createElement('option');o.value=i;o.textContent='Day '+i;ssd.appendChild(o)}
+      ssd.value=sd.value||'1';
+      ssd.addEventListener('change',()=>{sd.value=ssd.value;sd.dispatchEvent(new Event('change'));toast('Cycle start updated')});
+      sd.addEventListener('change',()=>{try{ssd.value=sd.value}catch(e){}});
+    }
+    const sf=$('setFeed');
+    if(sf){try{sf.value=localStorage.getItem('ml_feed_url')||''}catch(e){}}
+    const fsave=$('setFeedSave');
+    if(fsave)fsave.onclick=()=>{const v=(sf.value||'').trim();if(v&&v.indexOf('https://script.google.com/')!==0){toast('That does not look like a feed URL');return}try{localStorage.setItem('ml_feed_url',v)}catch(e){}toast('Feed URL saved')};
+    const ftest=$('setTest'),finfo=$('setSyncInfo');
+    if(ftest)ftest.onclick=async()=>{
+      const u=((sf&&sf.value)||localStorage.getItem('ml_feed_url')||'').trim();
+      if(!u){toast('No feed URL set yet');return}
+      ftest.textContent='Testing\u2026';
+      try{const r=await fetch(u+(u.indexOf('?')>=0?'&':'?')+'t='+Date.now(),{cache:'no-store'});const j=await r.json();
+        const n=(j.transactions||[]).length;
+        if(finfo)finfo.textContent='Feed OK \u00b7 '+n+' transactions \u00b7 updated '+new Date(j.updated||Date.now()).toLocaleString();
+        toast('Feed is reachable');}catch(e){if(finfo)finfo.textContent='Could not reach the feed';toast('Feed test failed')}
+      ftest.textContent='Test connection';};
+    const fsy=$('setSync');
+    if(fsy)fsy.onclick=()=>{if(typeof pullSync==='function'){pullSync();toast('Syncing\u2026')}else toast('Sync unavailable')};
+    const sn=$('setNotif');
+    const paintN=()=>{if(!('Notification' in window)){sn.textContent='Not supported';return}const pp=Notification.permission;sn.textContent=pp==='granted'?'On \u2713':pp==='denied'?'Blocked in browser':'Turn on';};
+    if(sn){paintN();sn.onclick=()=>{if(!('Notification' in window))return;if(Notification.permission==='granted'){toast('Alerts are already on')}else{Notification.requestPermission().then(()=>{paintN();syncAlertBtn();if(Notification.permission==='granted')toast('Alerts on')})}};}
+    const th=$('setTheme');
+    const paintT=()=>{th.textContent=document.body.classList.contains('light')?'Dark':'Light';};
+    try{if(localStorage.getItem('ml_theme')==='light')document.body.classList.add('light')}catch(e){}
+    if(th){paintT();th.onclick=()=>{document.body.classList.toggle('light');try{localStorage.setItem('ml_theme',document.body.classList.contains('light')?'light':'dark')}catch(e){}paintT();toast('Theme updated')};}
+    const ssms=$('setSms');
+    if(ssms)ssms.onclick=()=>{if(window.goSetupSms)window.goSetupSms();else toast('Open setup from the footer, step 5')};
+    const di=$('setDataInfo');
+    if(di)di.textContent=state.tx.length+' transactions \u00b7 '+Object.keys(state.budgets||{}).length+' budgets stored locally';
+    const ex=$('setExport');
+    if(ex)ex.onclick=()=>{const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),transactions:state.tx,budgets:state.budgets},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='moneylens-export-'+todayStr()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('Export downloaded')};
+    const cx=$('setCsv');
+    if(cx)cx.onclick=()=>{const rows=[['date','type','category','amount','note']].concat(state.tx.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.type,CATS[t.cat].l,t.amount,(t.note||'').replace(/"/g,'\\"')]));const csv=rows.map(r=>r.map(v=>'"'+String(v)+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='moneylens-'+todayStr()+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('CSV downloaded')};
+    const im=$('setImport');
+    if(im)im.addEventListener('change',ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);const inc=(j.transactions||j.tx||[]).filter(t=>t&&t.amount>0&&t.date);if(!inc.length){toast('No transactions found in that file');return}mergeTxns(inc,true,false);renderAll();toast('Import merged \u00b7 '+state.tx.length+' total')}catch(e){toast('Could not read that file')}};rd.readAsText(f);ev.target.value='';});
+    const cl=$('setClear');
+    if(cl)cl.onclick=()=>{if(!confirm('Clear all MoneyLens data in this browser? Transactions, budgets and settings will be wiped. Export first if you want a copy.'))return;const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(/^ml/.test(k)||k.indexOf('moneylens')>=0))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k));location.reload()};
+  })();
 
   $('prevM').onclick=()=>{state.ui.month=monthShift(state.ui.month,-1);syncMonthUI();renderAll()};
   $('nextM').onclick=()=>{state.ui.month=monthShift(state.ui.month,1);syncMonthUI();renderAll()};
@@ -1257,6 +1362,7 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
   ['skipManual','skipManual2','skipManual3'].forEach(id=>{const a=$(id); if(a)a.onclick=e=>{e.preventDefault();finishManual();};});
   const ls=$('lnkSetup'); if(ls)ls.onclick=e=>{e.preventDefault();startSetup();};
   const lsm=$('lnkSms'); if(lsm)lsm.onclick=e=>{e.preventDefault();show('setup');goStep(5);};
+  window.goSetupSms=function(){show('setup');goStep(5)};
   const lh=$('lnkHome'); if(lh)lh.onclick=e=>{e.preventDefault();show('landing');};
   function boot(){
     const q=new URLSearchParams(location.search);

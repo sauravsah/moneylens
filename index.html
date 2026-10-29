@@ -590,6 +590,16 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         </div>
         <div class="set-note" id="setDataInfo" style="margin-top:6px"></div>
       </div>
+      <div class="set-box" style="margin-top:14px">
+        <label>Categories</label>
+        <div class="set-row">
+          <input id="setCatName" type="text" placeholder="New category name" style="flex:1;min-width:160px">
+          <select id="setCatType"><option value="expense">Expense</option><option value="income">Income</option></select>
+          <button class="chip" id="setCatAdd">Add</button>
+        </div>
+        <div class="set-row" id="setCatList" style="margin-top:8px"></div>
+        <div class="set-note">Custom categories work everywhere: tagging, filters, budgets and charts.</div>
+      </div>
       <div class="set-note" style="margin-top:16px">MoneyLens v3.7 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
     </section>
   </section>
@@ -1035,6 +1045,7 @@ function renderList(){
 function fillCatSelect(type){
   const sel=$('mCat');sel.innerHTML='';
   (type==='income'?INC_CATS:EXP_CATS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;sel.appendChild(o)});
+  const nn=document.createElement('option');nn.value='__new';nn.textContent='+ Add new category\u2026';sel.appendChild(nn);
 }
 function openModal(t){
   editingId=t?t.id:null;
@@ -1126,6 +1137,14 @@ function init(){
     if(th){paintT();th.onclick=()=>{document.body.classList.toggle('light');try{localStorage.setItem('ml_theme',document.body.classList.contains('light')?'light':'dark')}catch(e){}paintT();toast('Theme updated')};}
     const ssms=$('setSms');
     if(ssms)ssms.onclick=()=>{if(window.goSetupSms)window.goSetupSms();else toast('Open setup from the footer, step 5')};
+    const cList=$('setCatList');
+    const rfCats=()=>{const fc=$('fCat');if(!fc)return;const v=fc.value;fc.innerHTML='<option value="all">All categories</option>';[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});fc.value=(INC_CATS.indexOf(v)>=0||EXP_CATS.indexOf(v)>=0)?v:'all';};
+    const paintCats=()=>{if(!cList)return;cList.innerHTML='';const cc=state.customCats||[];
+      if(!cc.length){cList.innerHTML='<span class="set-note">No custom categories yet.</span>';return}
+      cc.forEach(function(c,idx){const b=document.createElement('button');b.className='chip';b.textContent=((CATS[c.slug]&&CATS[c.slug].i)||'\ud83c\udff7')+' '+c.l+' \u2715';b.title='Remove category';b.onclick=function(){const t=(CATS[c.slug]&&CATS[c.slug].t)||c.t||'expense';state.tx.forEach(function(x){if(x.cat===c.slug)x.cat=(t==='income'?'otherin':'other')});delete CATS[c.slug];state.customCats.splice(idx,1);recomputeCats();save();renderAll();rfCats();paintCats();toast('Category removed \u00b7 its transactions moved to '+(t==='income'?'Other income':'Other'))};cList.appendChild(b)});};
+    paintCats();
+    const ca=$('setCatAdd');
+    if(ca)ca.onclick=()=>{const nm=($('setCatName').value||'').trim();if(!nm){toast('Give the category a name');return}const type=$('setCatType').value;makeCat(nm,type);save();$('setCatName').value='';renderAll();rfCats();paintCats();toast('Category \u201c'+nm+'\u201d added')};
     const di=$('setDataInfo');
     if(di)di.textContent=state.tx.length+' transactions \u00b7 '+Object.keys(state.budgets||{}).length+' budgets stored locally';
     const ex=$('setExport');
@@ -1146,6 +1165,15 @@ function init(){
   $('mCancel').onclick=closeModal;
   $('mSave').onclick=saveTx;
   $('mDel').onclick=delTx;
+  $('mCat').addEventListener('change',()=>{
+    if($('mCat').value!=='__new')return;
+    const ty=document.querySelector('#segType button.on').dataset.t;
+    const nm=window.prompt('New category name');
+    if(!nm||!nm.trim()){fillCatSelect(ty);return}
+    const slug=makeCat(nm.trim(),ty);save();
+    fillCatSelect(ty);$('mCat').value=slug;
+    toast('Category \u201c'+nm.trim()+'\u201d added');
+  });
   $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&$('overlay').classList.contains('show'))saveTx()});
   $('fUntagged').onclick=()=>{state.ui.untagged=!state.ui.untagged;$('fUntagged').classList.toggle('on',state.ui.untagged);renderList()};
@@ -1289,6 +1317,7 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
   const NEEDS=['rent','bills','transport','health','food','education'],WANTS=['shopping','fun','other','subscriptions','travel','care','gifts'],SAVINGS=['invest'];
   const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',education:'Education',shopping:'Shopping',fun:'Fun &amp; games',other:'Other',subscriptions:'Subscriptions',travel:'Travel',care:'Personal care',gifts:'Gifts &amp; donations',invest:'Investments · SIP'};
   const BUD_DEF={food:8000,transport:2500,shopping:4000,bills:3500,rent:15000,health:2500,fun:2000,other:1500,subscriptions:600,education:1500,travel:1500,care:500,gifts:500,invest:5000};
+try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense'&&!BUD_LAB[c.slug]){BUD_LAB[c.slug]=c.l;BUD_DEF[c.slug]=0;WANTS.push(c.slug)}})}catch(e){}
   let budVals=Object.assign({},BUD_DEF);
   try{const cur=JSON.parse(localStorage.getItem('moneylens_v2')||'null');if(cur&&cur.budgets)budVals=Object.assign({},BUD_DEF,cur.budgets)}catch(e){}
   function budFmt(v){return '\u20b9'+Number(v||0).toLocaleString('en-IN')}

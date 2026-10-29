@@ -21,7 +21,8 @@
   --font-d:'Space Grotesk',Inter,system-ui,sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;background:#05070f;color-scheme:dark}
+html:has(body.light){background:#f4f6fb;color-scheme:light}
 body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--txt);
   background:radial-gradient(1200px 800px at 80% -10%,rgba(139,124,255,.14),transparent 60%),
@@ -251,7 +252,7 @@ footer::before{content:'';width:8px;height:8px;border-radius:50%;background:var(
 .cta-row{display:flex;gap:12px;justify-content:center;align-items:center;margin-top:30px;flex-wrap:wrap}
 .cta{display:inline-flex;align-items:center;gap:10px;padding:15px 30px;border-radius:999px;border:0;cursor:pointer;font:600 15px Inter;color:#fff;background:linear-gradient(90deg,var(--acc1),var(--acc2));box-shadow:0 14px 44px rgba(99,102,241,.4);transition:.25s}
 .cta:hover{transform:translateY(-2px);box-shadow:0 18px 54px rgba(99,102,241,.5)}
-.ghostlink{font:600 14px Inter;color:var(--mut);text-decoration:none;padding:12px 18px;border-radius:999px;border:1px solid var(--line2);transition:.2s}
+.ghostlink{font:600 14px Inter;color:var(--mut);text-decoration:none;padding:12px 18px;border-radius:999px;border:1px solid var(--line2);background:transparent;transition:.2s}
 .ghostlink:hover{color:var(--txt);border-color:rgba(255,255,255,.3)}
 .feat-grid{max-width:1060px;margin:64px auto 0;padding:0 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
 .feat-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px;transition:.25s}
@@ -435,6 +436,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         <div class="bud-bucket"><div class="bud-bh">Needs (50%)<span id="budNeedsSum"></span></div><div class="bud-rows" id="budNeedsRows"></div></div>
         <div class="bud-bucket"><div class="bud-bh">Wants (30%)<span id="budWantsSum"></span></div><div class="bud-rows" id="budWantsRows"></div></div>
         <div class="bud-bucket"><div class="bud-bh">Savings (20%)<span id="budSavSum"></span></div><div class="bud-rows" id="budSavRows"></div></div>
+        <button class="chip" id="budAddCat" type="button" style="margin-top:12px">+ Add category</button>
         <div class="sm" id="budSave" style="margin-top:10px"></div>
         <div class="bud-act"><button class="primary" id="budAuto" type="button">Auto-allocate 50/30/20</button><button class="ghostlink" id="budSaveBtn" type="button">Save budget</button><a class="flink" id="budSkip" href="#">Skip for now</a></div>
       </div>
@@ -1319,6 +1321,18 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
   const BUD_DEF={food:8000,transport:2500,shopping:4000,bills:3500,rent:15000,health:2500,fun:2000,other:1500,subscriptions:600,education:1500,travel:1500,care:500,gifts:500,invest:5000};
 try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense'&&!BUD_LAB[c.slug]){BUD_LAB[c.slug]=c.l;BUD_DEF[c.slug]=0;WANTS.push(c.slug)}})}catch(e){}
   let budVals=Object.assign({},BUD_DEF);
+  const bac=$('budAddCat');
+  if(bac)bac.onclick=()=>{
+    const nm=window.prompt('New expense category name');
+    if(!nm||!nm.trim())return;
+    const name=nm.trim().slice(0,24);
+    const slug=makeCat(name,'expense');
+    if(!BUD_LAB[slug]){BUD_LAB[slug]=CATS[slug].l;BUD_DEF[slug]=0;WANTS.push(slug)}
+    budVals[slug]=budVals[slug]||0;
+    try{save()}catch(e){}
+    budRows();budPaint();
+    toast('\u201c'+name+'\u201d added \u00b7 set its amount or tap Auto-allocate');
+  };
   try{const cur=JSON.parse(localStorage.getItem('moneylens_v2')||'null');if(cur&&cur.budgets)budVals=Object.assign({},BUD_DEF,cur.budgets)}catch(e){}
   function budFmt(v){return '\u20b9'+Number(v||0).toLocaleString('en-IN')}
   function budRows(){

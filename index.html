@@ -296,7 +296,9 @@ footer::before{content:'';width:8px;height:8px;border-radius:50%;background:var(
 .bud-row input{width:92px;background:rgba(255,255,255,.06);border:1px solid var(--line2);border-radius:9px;color:var(--txt);font:600 13px Inter;padding:7px 9px;text-align:right}
 .bud-row input:focus{outline:none;border-color:var(--acc2)}
 .bud-act{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
-.bud-act .ghostlink{color:var(--txt);border-color:rgba(255,255,255,.4);font-weight:600}
+.bud-act .primary{background:var(--grad);color:#fff;border:0;padding:11px 20px;border-radius:99px;font-weight:700;cursor:pointer}
+.bud-act .primary:hover{filter:brightness(1.1)}
+.bud-act .ghostlink{color:var(--txt);border-color:var(--line2);font-weight:600}
 .bud-act .ghostlink:hover{border-color:var(--acc2)}
 .smsurl{display:flex;align-items:center;gap:10px;margin-top:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .smsurl code{flex:1;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--acc2);word-break:break-all}
@@ -432,8 +434,9 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         <div class="sm" id="budSplit" style="margin-top:8px"></div>
         <div class="bud-bucket"><div class="bud-bh">Needs (50%)<span id="budNeedsSum"></span></div><div class="bud-rows" id="budNeedsRows"></div></div>
         <div class="bud-bucket"><div class="bud-bh">Wants (30%)<span id="budWantsSum"></span></div><div class="bud-rows" id="budWantsRows"></div></div>
+        <div class="bud-bucket"><div class="bud-bh">Savings (20%)<span id="budSavSum"></span></div><div class="bud-rows" id="budSavRows"></div></div>
         <div class="sm" id="budSave" style="margin-top:10px"></div>
-        <div class="bud-act"><button class="ghostlink" id="budAuto" type="button">Auto-allocate 50/30/20</button><a class="flink" id="budSkip" href="#">Skip for now</a></div>
+        <div class="bud-act"><button class="primary" id="budAuto" type="button">Auto-allocate 50/30/20</button><button class="ghostlink" id="budSaveBtn" type="button">Save budget</button><a class="flink" id="budSkip" href="#">Skip for now</a></div>
       </div>
       <div class="step">
         <h2>Read bank SMS too (optional)</h2>
@@ -635,7 +638,13 @@ const CATS={
   rent:{l:'Rent',i:'🏠',c:'#818cf8',t:'expense'},
   health:{l:'Health',i:'🏥',c:'#4ade80',t:'expense'},
   fun:{l:'Fun & games',i:'🎮',c:'#c084fc',t:'expense'},
-  other:{l:'Other',i:'✨',c:'#94a3b8',t:'expense'}
+  other:{l:'Other',i:'✨',c:'#94a3b8',t:'expense'},
+  subscriptions:{l:'Subscriptions',i:'📺',c:'#60a5fa',t:'expense'},
+  education:{l:'Education',i:'📚',c:'#a3e635',t:'expense'},
+  travel:{l:'Travel',i:'✈️',c:'#fb923c',t:'expense'},
+  care:{l:'Personal care',i:'🧴',c:'#e879f9',t:'expense'},
+  gifts:{l:'Gifts & donations',i:'💝',c:'#fda4af',t:'expense'},
+  invest:{l:'Investments · SIP',i:'💰',c:'#34d399',t:'expense'}
 };
 let EXP_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='expense');
 let INC_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='income');
@@ -730,8 +739,14 @@ function autoCat_(t){
     ['rent',/rent|landlord|\bpg\b|hostel/],
     ['bills',/airtel|jio|vodafone|bsnl|electricity|recharge|\bbill\b|\bbills\b|emi|insurance|mseb|broadband/],
     ['health',/pharmacy|apollo|medplus|hospital|clinic|medical|chemist|\bmed\b/],
-    ['fun',/netflix|hotstar|spotify|bookmyshow|game|steam|prime video/],
-    ['transport',/uber|ola\b|rapido|irctc|metro|petrol|fuel|indian oil|fastag|parking/],
+    ['subscriptions',/subscription|netflix|hotstar|spotify|prime video|youtube premium|google one|jiocinema|sony ?liv|zee5|icloud|adobe/],
+    ['invest',/groww|zerodha|\bsip\b|mutual fund|upstox|smallcase|indmoney|\bkite\b|\bcoin\b/],
+    ['education',/udemy|coursera|unacademy|byju|course|tuition|\bexam\b|certification/],
+    ['travel',/makemytrip|goibibo|redbus|irctc|oyo|airbnb|flight|indigo|vistara|hotel|\btrain\b/],
+    ['care',/salon|\bgym\b|cult\.?fit|spa|barber|laundry/],
+    ['gifts',/\bgift\b|donation|temple|\bseva\b/],
+    ['fun',/bookmyshow|game|steam|playstation|xbox/],
+    ['transport',/uber|ola\b|rapido|metro|petrol|fuel|indian oil|fastag|parking/],
     ['shopping',/amazon|flipkart|myntra|zudio|ajio|meesho|nykaa|blinkit|zepto|bigbasket|dmart|\bshop\b|store|\bmart\b/],
     ['food',/zomato|swiggy|chai|restaurant|cafe|domino|pizza|kfc|starbucks|\bbar\b|dinner|lunch|food/]
   ];
@@ -1165,10 +1180,11 @@ function init(){
     const inc=state.tx.filter(t=>t.type==='income'&&t.date>=cut).reduce((a,t)=>a+t.amount,0);
     if(!(inc>0)){toast('Add some income first');return}
     const avg=inc/3,NE=0.5*avg,WA=0.3*avg;
-    const needs=['rent','bills','transport','health','food'],wants=['shopping','fun','other'];
+    const needs=['rent','bills','transport','health','food','education'],wants=['shopping','fun','other','subscriptions','travel','care','gifts'],savs=['invest'];
     const nb=needs.reduce((a,c)=>a+(state.budgets[c]||0),0),wb=wants.reduce((a,c)=>a+(state.budgets[c]||0),0);
     needs.forEach(c=>state.budgets[c]=nb>0?Math.round((state.budgets[c]||0)/nb*NE):Math.round(NE/needs.length));
     wants.forEach(c=>state.budgets[c]=wb>0?Math.round((state.budgets[c]||0)/wb*WA):Math.round(WA/wants.length));
+    savs.forEach(c=>state.budgets[c]=Math.round(avg*.2));
     save();renderAll();
     toast('Budgets set to 50/30/20 of about '+fmtk(avg)+' a month');
   };
@@ -1270,9 +1286,9 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
     if(n===4){const bi=$('budIncome');if(bi&&!bi.value){try{const iv=localStorage.getItem('ml_income');if(iv)bi.value=iv}catch(e){}}budRows();budPaint();}
     $('setupNext').textContent = n===1?'Start':n<6?'Continue':'Open MoneyLens';
   }
-  const NEEDS=['rent','bills','transport','health','food'],WANTS=['shopping','fun','other'];
-  const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',shopping:'Shopping',fun:'Fun &amp; games',other:'Other'};
-  const BUD_DEF={food:8000,transport:2500,shopping:4000,bills:3500,rent:15000,health:2500,fun:2000,other:1500};
+  const NEEDS=['rent','bills','transport','health','food','education'],WANTS=['shopping','fun','other','subscriptions','travel','care','gifts'],SAVINGS=['invest'];
+  const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',education:'Education',shopping:'Shopping',fun:'Fun &amp; games',other:'Other',subscriptions:'Subscriptions',travel:'Travel',care:'Personal care',gifts:'Gifts &amp; donations',invest:'Investments · SIP'};
+  const BUD_DEF={food:8000,transport:2500,shopping:4000,bills:3500,rent:15000,health:2500,fun:2000,other:1500,subscriptions:600,education:1500,travel:1500,care:500,gifts:500,invest:5000};
   let budVals=Object.assign({},BUD_DEF);
   try{const cur=JSON.parse(localStorage.getItem('moneylens_v2')||'null');if(cur&&cur.budgets)budVals=Object.assign({},BUD_DEF,cur.budgets)}catch(e){}
   function budFmt(v){return '\u20b9'+Number(v||0).toLocaleString('en-IN')}
@@ -1281,15 +1297,15 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
       const d=document.createElement('div');d.className='bud-row';
       d.innerHTML='<span>'+BUD_LAB[c]+'</span><input type="number" min="0" id="bud_'+c+'" value="'+(budVals[c]||'')+'" placeholder="0">';
       w.appendChild(d);});};
-    mk('budNeedsRows',NEEDS);mk('budWantsRows',WANTS);
+    mk('budNeedsRows',NEEDS);mk('budWantsRows',WANTS);mk('budSavRows',SAVINGS);
   }
-  function budRead(){NEEDS.concat(WANTS).forEach(c=>{const el=$('bud_'+c);if(el)budVals[c]=Math.max(0,+el.value||0)})}
+  function budRead(){NEEDS.concat(WANTS,SAVINGS).forEach(c=>{const el=$('bud_'+c);if(el)budVals[c]=Math.max(0,+el.value||0)})}
   function budPaint(){
     const inc=+$('budIncome').value||0;
-    const nb=NEEDS.reduce((a,c)=>a+(budVals[c]||0),0),wb=WANTS.reduce((a,c)=>a+(budVals[c]||0),0);
+    const nb=NEEDS.reduce((a,c)=>a+(budVals[c]||0),0),wb=WANTS.reduce((a,c)=>a+(budVals[c]||0),0),sb=SAVINGS.reduce((a,c)=>a+(budVals[c]||0),0);
     $('budSplit').textContent=inc>0?('50/30/20 of '+budFmt(inc)+' \u2192 needs '+budFmt(Math.round(inc*.5))+' \u00b7 wants '+budFmt(Math.round(inc*.3))+' \u00b7 savings '+budFmt(Math.round(inc*.2))):'Give your take-home, then auto-allocate or edit freely.';
-    $('budNeedsSum').textContent=budFmt(nb);$('budWantsSum').textContent=budFmt(wb);
-    $('budSave').textContent=inc>0?('Budgeted spending '+budFmt(nb+wb)+' \u00b7 savings target '+budFmt(Math.max(0,Math.round(inc*.2)))+' a month'):'';
+    $('budNeedsSum').textContent=budFmt(nb);$('budWantsSum').textContent=budFmt(wb);var bs=$('budSavSum');if(bs)bs.textContent=budFmt(sb);
+    $('budSave').textContent=inc>0?('Budgeted spending '+budFmt(nb+wb)+' \u00b7 investing '+budFmt(sb)+' \u00b7 savings target '+budFmt(Math.max(0,Math.round(inc*.2)))+' a month'):'';
   }
   function budAuto(){
     const inc=+$('budIncome').value||0;if(!(inc>0))return;
@@ -1297,19 +1313,20 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
     const nb=NEEDS.reduce((a,c)=>a+(budVals[c]||0),0),wb=WANTS.reduce((a,c)=>a+(budVals[c]||0),0);
     NEEDS.forEach(c=>budVals[c]=nb>0?Math.round((budVals[c]||0)/nb*NE):Math.round(NE/NEEDS.length));
     WANTS.forEach(c=>budVals[c]=wb>0?Math.round((budVals[c]||0)/wb*WA):Math.round(WA/WANTS.length));
+    SAVINGS.forEach(c=>budVals[c]=Math.round(inc*.2));
     budRows();budPaint();
   }
   function saveBudget(){
     const inc=+$('budIncome').value||0;
-    if(!(inc>0))return;
     budRead();
     try{
-      localStorage.setItem('ml_income',String(inc));
+      if(inc>0)localStorage.setItem('ml_income',String(inc));
       const cur=JSON.parse(localStorage.getItem('moneylens_v2')||'{}')||{};
       cur.budgets=Object.assign({},cur.budgets,budVals);
       localStorage.setItem('moneylens_v2',JSON.stringify(cur));
     }catch(e){}
   }
+    $('budSaveBtn').onclick=function(){saveBudget();var b=$('budSaveBtn');b.textContent='Saved \u2713';setTimeout(function(){b.textContent='Save budget'},1500)};
   function saveUrl(){const u=$('feedUrl').value.trim(); if(u){try{localStorage.setItem(KEY_URL,u)}catch(e){}}}
   function finish(){saveUrl(); try{localStorage.removeItem('ml_manual');localStorage.setItem(KEY_DONE,'1')}catch(e){}; location.reload();}
   function finishManual(){try{localStorage.removeItem('ml_feed_url');localStorage.setItem('ml_manual','1');localStorage.setItem(KEY_DONE,'1')}catch(e){}; location.reload();}

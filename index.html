@@ -437,6 +437,12 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         <div class="bud-bucket"><div class="bud-bh">Wants (30%)<span id="budWantsSum"></span></div><div class="bud-rows" id="budWantsRows"></div></div>
         <div class="bud-bucket"><div class="bud-bh">Savings (20%)<span id="budSavSum"></span></div><div class="bud-rows" id="budSavRows"></div></div>
         <button class="chip" id="budAddCat" type="button" style="margin-top:12px">+ Add category</button>
+        <div id="budAddForm" class="set-row" style="display:none;margin-top:10px">
+          <input id="budNewName" type="text" placeholder="Category name" style="flex:1;min-width:130px">
+          <select id="budNewGroup"><option value="needs">Needs (50%)</option><option value="wants" selected>Wants (30%)</option><option value="savings">Savings (20%)</option></select>
+          <button class="chip" id="budNewAdd" type="button">Add</button>
+          <button class="chip" id="budNewCancel" type="button">Cancel</button>
+        </div>
         <div class="sm" id="budSave" style="margin-top:10px"></div>
         <div class="bud-act"><button class="primary" id="budAuto" type="button">Auto-allocate 50/30/20</button><button class="ghostlink" id="budSaveBtn" type="button">Save budget</button><a class="flink" id="budSkip" href="#">Skip for now</a></div>
       </div>
@@ -596,7 +602,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         <label>Categories</label>
         <div class="set-row">
           <input id="setCatName" type="text" placeholder="New category name" style="flex:1;min-width:160px">
-          <select id="setCatType"><option value="expense">Expense</option><option value="income">Income</option></select>
+          <select id="setCatType"><option value="expense">Expense</option><option value="income">Income</option></select><select id="setCatGroup"><option value="wants" selected>Wants</option><option value="needs">Needs</option><option value="savings">Savings</option></select>
           <button class="chip" id="setCatAdd">Add</button>
         </div>
         <div class="set-row" id="setCatList" style="margin-top:8px"></div>
@@ -662,13 +668,13 @@ let EXP_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='expense');
 let INC_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='income');
 const CPAL=['#f472b6','#a78bfa','#22d3ee','#fb923c','#4ade80','#e879f9','#facc15','#60a5fa'];
 function recomputeCats(){EXP_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='expense');INC_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='income')}
-function makeCat(name,type){
+function makeCat(name,type,group){
   let slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,14);
   if(!slug)slug='c'+Date.now();
   const base=slug;let n=2;while(CATS[slug])slug=base+(n++);
   const l=name.trim().slice(0,24);
   CATS[slug]={l:l.charAt(0).toUpperCase()+l.slice(1),i:'🏷️',c:CPAL[Object.keys(CATS).length%CPAL.length],t:type};
-  state.customCats.push({slug:slug,l:CATS[slug].l,i:'🏷️',c:CATS[slug].c,t:type});
+  state.customCats.push({slug:slug,l:CATS[slug].l,i:'🏷️',c:CATS[slug].c,t:type,g:group||''});
   recomputeCats();return slug;
 }
 function matchCatLabel(text){
@@ -1031,7 +1037,7 @@ function renderList(){
   $('txCount').textContent=list.length+' in '+monthLabel(state.ui.month)+(unN?' · '+unN+' to tag':'');
   if(!list.length){wrap.innerHTML='<div class="empty"><div class="e">🍃</div>No transactions match. Add one or change the filters.</div>';return}
   list.forEach((t,i)=>{
-    const c=CATS[t.cat];
+    const c=CATS[t.cat]||{l:(t.cat||'Other'),i:'\u2753',c:'#94a3b8'};
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
       <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)} · ${t.review?'Untagged':c.l}</div></div>
@@ -1146,7 +1152,7 @@ function init(){
       cc.forEach(function(c,idx){const b=document.createElement('button');b.className='chip';b.textContent=((CATS[c.slug]&&CATS[c.slug].i)||'\ud83c\udff7')+' '+c.l+' \u2715';b.title='Remove category';b.onclick=function(){const t=(CATS[c.slug]&&CATS[c.slug].t)||c.t||'expense';state.tx.forEach(function(x){if(x.cat===c.slug)x.cat=(t==='income'?'otherin':'other')});delete CATS[c.slug];state.customCats.splice(idx,1);recomputeCats();save();renderAll();rfCats();paintCats();toast('Category removed \u00b7 its transactions moved to '+(t==='income'?'Other income':'Other'))};cList.appendChild(b)});};
     paintCats();
     const ca=$('setCatAdd');
-    if(ca)ca.onclick=()=>{const nm=($('setCatName').value||'').trim();if(!nm){toast('Give the category a name');return}const type=$('setCatType').value;makeCat(nm,type);save();$('setCatName').value='';renderAll();rfCats();paintCats();toast('Category \u201c'+nm+'\u201d added')};
+    if(ca)ca.onclick=()=>{const nm=($('setCatName').value||'').trim();if(!nm){toast('Give the category a name');return}const type=$('setCatType').value;const cg=$('setCatGroup')?$('setCatGroup').value:'';makeCat(nm,type,type==='expense'?cg:'');save();$('setCatName').value='';renderAll();rfCats();paintCats();toast('Category \u201c'+nm+'\u201d added')};
     const di=$('setDataInfo');
     if(di)di.textContent=state.tx.length+' transactions \u00b7 '+Object.keys(state.budgets||{}).length+' budgets stored locally';
     const ex=$('setExport');
@@ -1211,6 +1217,7 @@ function init(){
     if(!(inc>0)){toast('Add some income first');return}
     const avg=inc/3,NE=0.5*avg,WA=0.3*avg;
     const needs=['rent','bills','transport','health','food','education'],wants=['shopping','fun','other','subscriptions','travel','care','gifts'],savs=['invest'];
+    try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense')((c.g==='needs')?needs:(c.g==='savings')?savs:wants).push(c.slug)})}catch(e){}
     const nb=needs.reduce((a,c)=>a+(state.budgets[c]||0),0),wb=wants.reduce((a,c)=>a+(state.budgets[c]||0),0);
     needs.forEach(c=>state.budgets[c]=nb>0?Math.round((state.budgets[c]||0)/nb*NE):Math.round(NE/needs.length));
     wants.forEach(c=>state.budgets[c]=wb>0?Math.round((state.budgets[c]||0)/wb*WA):Math.round(WA/wants.length));
@@ -1319,20 +1326,29 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
   const NEEDS=['rent','bills','transport','health','food','education'],WANTS=['shopping','fun','other','subscriptions','travel','care','gifts'],SAVINGS=['invest'];
   const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',education:'Education',shopping:'Shopping',fun:'Fun &amp; games',other:'Other',subscriptions:'Subscriptions',travel:'Travel',care:'Personal care',gifts:'Gifts &amp; donations',invest:'Investments · SIP'};
   const BUD_DEF={food:8000,transport:2500,shopping:4000,bills:3500,rent:15000,health:2500,fun:2000,other:1500,subscriptions:600,education:1500,travel:1500,care:500,gifts:500,invest:5000};
-try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense'&&!BUD_LAB[c.slug]){BUD_LAB[c.slug]=c.l;BUD_DEF[c.slug]=0;WANTS.push(c.slug)}})}catch(e){}
+try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense'&&!BUD_LAB[c.slug]){BUD_LAB[c.slug]=c.l;BUD_DEF[c.slug]=0;(c.g==='needs'?NEEDS:c.g==='savings'?SAVINGS:WANTS).push(c.slug)}})}catch(e){}
   let budVals=Object.assign({},BUD_DEF);
-  const bac=$('budAddCat');
-  if(bac)bac.onclick=()=>{
-    const nm=window.prompt('New expense category name');
-    if(!nm||!nm.trim())return;
-    const name=nm.trim().slice(0,24);
-    const slug=makeCat(name,'expense');
-    if(!BUD_LAB[slug]){BUD_LAB[slug]=CATS[slug].l;BUD_DEF[slug]=0;WANTS.push(slug)}
+  const bac=$('budAddCat'),bform=$('budAddForm');
+  const budHideForm=()=>{if(bform)bform.style.display='none';const ni=$('budNewName');if(ni)ni.value='';};
+  if(bac)bac.onclick=()=>{if(!bform)return;const open=bform.style.display==='none';bform.style.display=open?'flex':'none';if(open){const ni=$('budNewName');if(ni)ni.focus()}};
+  const bna=$('budNewAdd');
+  if(bna)bna.onclick=()=>{
+    const nm=($('budNewName').value||'').trim();
+    if(!nm){toast('Give the category a name first');return}
+    const g=$('budNewGroup').value;
+    const name=nm.slice(0,24);
+    const slug=makeCat(name,'expense',g);
+    [NEEDS,WANTS,SAVINGS].forEach(arr=>{const i=arr.indexOf(slug);if(i>=0)arr.splice(i,1)});
+    (g==='needs'?NEEDS:g==='savings'?SAVINGS:WANTS).push(slug);
+    if(!BUD_LAB[slug]){BUD_LAB[slug]=CATS[slug].l;BUD_DEF[slug]=0}
     budVals[slug]=budVals[slug]||0;
     try{save()}catch(e){}
+    budHideForm();
     budRows();budPaint();
-    toast('\u201c'+name+'\u201d added \u00b7 set its amount or tap Auto-allocate');
+    toast('\u201c'+name+'\u201d added to '+(g==='needs'?'Needs':g==='savings'?'Savings':'Wants'));
   };
+  const bnc=$('budNewCancel');
+  if(bnc)bnc.onclick=budHideForm;
   try{const cur=JSON.parse(localStorage.getItem('moneylens_v2')||'null');if(cur&&cur.budgets)budVals=Object.assign({},BUD_DEF,cur.budgets)}catch(e){}
   function budFmt(v){return '\u20b9'+Number(v||0).toLocaleString('en-IN')}
   function budRows(){

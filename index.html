@@ -1420,8 +1420,8 @@ try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expens
   }
     $('budSaveBtn').onclick=function(){saveBudget();var b=$('budSaveBtn');b.textContent='Saved \u2713';setTimeout(function(){b.textContent='Save budget'},1500)};
   function saveUrl(){const u=$('feedUrl').value.trim(); if(u){try{localStorage.setItem(KEY_URL,u)}catch(e){}}}
-  function finish(){saveUrl(); try{localStorage.removeItem('ml_manual');localStorage.setItem(KEY_DONE,'1')}catch(e){}; location.reload();}
-  function finishManual(){try{localStorage.removeItem('ml_feed_url');localStorage.setItem('ml_manual','1');localStorage.setItem(KEY_DONE,'1')}catch(e){}; location.reload();}
+  function finish(){saveUrl(); try{localStorage.removeItem('ml_manual');localStorage.setItem(KEY_DONE,'1')}catch(e){}; location.href=location.origin+location.pathname+'?view=app';}
+  function finishManual(){try{localStorage.removeItem('ml_feed_url');localStorage.setItem('ml_manual','1');localStorage.setItem(KEY_DONE,'1')}catch(e){}; location.href=location.origin+location.pathname+'?view=app';}
   function manualUI(){
     if(typeof SYNC_URL!=="undefined"&&SYNC_URL) return;
     const b=$('importBtn'); if(b)b.style.display='none';

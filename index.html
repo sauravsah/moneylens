@@ -1430,8 +1430,10 @@ try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expens
     const lc=$('lnkConnect'); if(lc)lc.onclick=e=>{e.preventDefault();startSetup();};
     const lh=$('lnkHome'); if(lh)lh.onclick=e=>{e.preventDefault();show('landing');};
   }
-  function startSetup(){let ok=false;try{ok=!!(localStorage.getItem(KEY_DONE)||localStorage.getItem(KEY_URL))}catch(e){} if(ok){show('app');return;} show('setup'); goStep(1);}
+  function startSetup(){show('setup'); goStep(1);}
   ['ctaStart','ctaStart2','ctaStart3'].forEach(id=>{const b=$(id); if(b)b.onclick=startSetup;});
+  {let _ok=false;try{_ok=!!(localStorage.getItem(KEY_DONE)||localStorage.getItem(KEY_URL))}catch(e){}
+   if(_ok){const s1=document.querySelector('#setup .step');if(s1&&!$('doneOpen')){const p=document.createElement('p');p.style.marginTop='14px';p.innerHTML='<a class="flink" id="doneOpen" href="#">Already set up? Open your dashboard &rarr;</a>';s1.appendChild(p);const d=$('doneOpen');d.onclick=e=>{e.preventDefault();show('app');};}}}
   const nx=$('setupNext');
   nx.onclick=()=>{ if(step>=6){finish();} else { if(step===3)saveUrl(); if(step===4)saveBudget(); goStep(step+1);} };
   $('budIncome').addEventListener('input',budPaint);

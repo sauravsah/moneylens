@@ -633,7 +633,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <div class="bud-ctl"><label>Cycle starts on</label><select id="salDay"></select><button class="chip" id="b503020">Apply 50/30/20</button></div>
         <div class="budget-list" id="budgetList"></div>
       </div>
-      <div class="pmore" id="budMoreBtn">See more \u25be</div>
+      <div class="pmore" id="budMoreBtn">See more ▾</div>
     </section>
   </section>
 
@@ -1173,7 +1173,7 @@ function renderInsightsExtra(){
     return '<div class="prow" data-note="'+k.replace(/"/g,'&quot;')+'"><div class="pl"><div class="pn">'+k+'</div><div class="ps">'+g.n+' payment'+(g.n===1?'':'s')+' \u00b7 '+pct+'% of spend</div></div><div class="pv">'+fmtk(g.v)+'</div><div class="pbar"><div style="width:'+pct+'%"></div></div></div>';
   }).join(''):'<div class="empty" style="padding:10px">No expenses yet</div>';
   let tHtml2=tHtml;
-  if(topAll.length>3)tHtml2+='<div class="pmore">'+(payeesOpen?'Show fewer payees \u25b4':'+ '+(topAll.length-3)+' more payees \u25be')+'</div>';
+  if(topAll.length>3)tHtml2+='<div class="pmore">'+(payeesOpen?'Show fewer payees ▴':'+ '+(topAll.length-3)+' more payees ▾')+'</div>';
   $('topPayees').innerHTML=tHtml2;const pn=$('payeeNote');if(pn)pn.style.display=payeesOpen?'':'none';
   const tp=$('topPayees');
   if(!tp._w){tp._w=1;tp.addEventListener('click',e=>{
@@ -1446,7 +1446,7 @@ function init(){
   purgeDemo_();
   settingsPopInit();
   state.ui.month=mKey(todayStr());
-  const bmb=$('budMoreBtn');if(bmb)bmb.onclick=()=>{budMoreOpen=!budMoreOpen;const bm=$('budMore');if(bm)bm.style.display=budMoreOpen?'':'none';bmb.textContent=budMoreOpen?'See less \u25b4':'See more \u25be';};
+  const bmb=$('budMoreBtn');if(bmb)bmb.onclick=()=>{budMoreOpen=!budMoreOpen;const bm=$('budMore');if(bm)bm.style.display=budMoreOpen?'':'none';bmb.textContent=budMoreOpen?'See less ▴':'See more ▾';};
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
   const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};
   syncMonthUI();renderAll();

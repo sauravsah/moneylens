@@ -359,6 +359,8 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
 .rmeta{color:var(--mut2);font-size:12px;margin-top:3px}
 .rok{color:#34d399;font-weight:600}
 .rmiss{color:#fbbf24;font-weight:600}
+.rbtn{color:#7dd3fc;font-weight:600;text-decoration:none}
+.rsent{color:#34d399;font-weight:600}
 .chart-detail{margin-top:14px}
 .cd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cd-title{font-weight:600;font-size:14px}
@@ -908,7 +910,7 @@ function renderReports(){
   $('reportsList').innerHTML=reps.map(r=>{
     const d=new Date(r.at);const when=isNaN(d)?'':' · '+d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
     const ok=r.parsed;
-    return '<div class="rrow"><div class="rtxt">'+String(r.text||'').replace(/</g,'&lt;').slice(0,90)+'</div><div class="rmeta">'+when+' · <span class="'+(ok?'rok':'rmiss')+'">'+(ok?'reads fine now':'not readable yet')+'</span></div></div>';
+    return '<div class="rrow"><div class="rtxt">'+String(r.text||'').replace(/</g,'&lt;').slice(0,90)+'</div><div class="rmeta">'+when+' · <span class="'+(ok?'rok':'rmiss')+'">'+(ok?'reads fine now':'not readable yet')+'</span>'+(r.notified?' · <span class="rsent">emailed</span>':'')+(!ok&&SYNC_URL?' · <a class="rbtn" href="'+SYNC_URL+'?notify='+encodeURIComponent(r.id)+'" target="_blank">Email me</a>':'')+'</div></div>';
   }).join('');
 }
 

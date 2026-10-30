@@ -369,6 +369,22 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
 .cd-row .t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cd-row .s{font-size:11px;color:#8b93a7}
 .cd-row .amt{font-weight:700;font-size:13px;flex:none}
+.done-pill{display:inline-block;margin:0 0 12px;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;color:#34d399;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35)}
+.sdot{position:relative}
+.sdot.done{background:#34d399!important;border-color:#34d399!important}
+.sdot.done::after{content:'\2713';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#04110c;font-size:9px;font-weight:800}
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:238px;z-index:60;background:#080b16;border-right:1px solid rgba(255,255,255,.07);padding:18px 14px;transform:translateX(-102%);transition:transform .22s ease;display:flex;flex-direction:column;gap:14px}
+body.side-open #sidebar{transform:none}
+#sideBackdrop{position:fixed;inset:0;background:rgba(2,4,10,.6);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s}
+body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
+.side-head{display:flex;align-items:center;justify-content:space-between}
+.sbtn{background:none;border:1px solid rgba(255,255,255,.14);color:#c7cde0;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;flex:none}
+#sideNav{display:flex;flex-direction:column;gap:4px;overflow:auto}
+.snav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#aab2c8;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid transparent;background:none;text-align:left;width:100%;font-family:inherit}
+.snav:hover{background:rgba(255,255,255,.05);color:#e7ebf7}
+.snav.on{background:rgba(56,189,248,.12);color:#7dd3fc;border-color:rgba(56,189,248,.25)}
+.snav .sn{font-size:10px;color:#5c6479;letter-spacing:.08em;min-width:20px}
+@media(min-width:1020px){body.side-open #app main{margin-left:246px}body.side-open #app header{margin-left:238px}}
 </style>
 </head>
 <body>
@@ -491,8 +507,15 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
 </section>
 
 <div id="app" class="view">
+<aside id="sidebar">
+  <div class="side-head"><div class="logo">MoneyLens<span>sections</span></div><button id="sideClose" class="sbtn" title="Hide sidebar">&larr;</button></div>
+  <nav id="sideNav"></nav>
+  <div class="sm" style="color:#5c6479;padding:0 4px">Tap a section to open it. The arrow tucks the menu away; the &#9776; button brings it back.</div>
+</aside>
+<div id="sideBackdrop"></div>
 <header>
   <div class="logo">MoneyLens<span>personal finance</span></div>
+  <button id="sideOpen" class="ghost" style="padding:6px 11px" title="Sections">&#9776;</button>
   <div class="month-nav">
     <button id="prevM" aria-label="Previous month">&#8249;</button>
     <div id="monthLabel"></div>
@@ -507,7 +530,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
 </header>
 
 <main>
-  <section class="feature">
+  <section class="feature" id="secOverview">
     <div class="fhead">
       <span class="eyebrow">01 &middot; Overview</span>
       <h2>Your money at a glance</h2>
@@ -521,7 +544,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
     </section>
   </section>
 
-  <section class="feature">
+  <section class="feature" id="secInsights">
     <div class="fhead">
       <span class="eyebrow">02 &middot; Insights</span>
       <h2>Where the month went</h2>
@@ -543,7 +566,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
     </section>
   </section>
 
-  <section class="feature">
+  <section class="feature" id="secBudgets">
     <div class="fhead">
       <span class="eyebrow">03 &middot; Budgets</span>
       <h2>Spending with guardrails</h2>
@@ -557,7 +580,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
     </section>
   </section>
 
-  <section class="feature">
+  <section class="feature" id="secRecurring">
     <section class="card" id="recCard">
       <div class="fhead" style="margin-bottom:14px">
         <span class="eyebrow">04 &middot; Recurring</span>
@@ -568,7 +591,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
     </section>
   </section>
 
-  <section class="feature">
+  <section class="feature" id="secTx">
     <div class="fhead">
       <span class="eyebrow">05 &middot; Transactions</span>
       <h2>Every rupee, tagged by you</h2>
@@ -1250,10 +1273,39 @@ function smartRetag_(){
   save();
   if(n)toast('Smart re-tag: '+n+' transaction'+(n===1?'':'s')+' recategorized');
 }
+const SECTIONS=[['secOverview','01','Overview'],['secInsights','02','Insights'],['secBudgets','03','Budgets'],['secRecurring','04','Recurring'],['secTx','05','Transactions'],['secSettings','06','Settings']];
+function buildSideNav(){
+  const nav=$('sideNav');if(!nav)return;
+  nav.innerHTML='';
+  SECTIONS.forEach(s=>{
+    const b=document.createElement('button');b.className='snav';b.id='nav_'+s[0];
+    b.innerHTML='<span class="sn">'+s[1]+'</span>'+s[2];
+    b.onclick=()=>showSection(s[0]);
+    nav.appendChild(b);
+  });
+}
+function showSection(id){
+  document.querySelectorAll('#app main > section.feature').forEach(el=>{el.style.display=el.id===id?'':'none'});
+  SECTIONS.forEach(s=>{const b=$('nav_'+s[0]);if(b)b.classList.toggle('on',s[0]===id)});
+  state.settings=state.settings||{};state.settings.section=id;save();
+  if(window.innerWidth<1020)document.body.classList.remove('side-open');
+  requestAnimationFrame(()=>setTimeout(()=>{try{renderAll()}catch(e){}},60));
+}
+function sideInit(){
+  buildSideNav();
+  const so=$('sideOpen');if(so)so.onclick=()=>{document.body.classList.add('side-open');state.settings=state.settings||{};state.settings.sideClosed=false;save()};
+  const sc=$('sideClose');if(sc)sc.onclick=()=>{document.body.classList.remove('side-open');state.settings=state.settings||{};state.settings.sideClosed=true;save()};
+  const bd=$('sideBackdrop');if(bd)bd.onclick=()=>document.body.classList.remove('side-open');
+  const sec=(state.settings&&state.settings.section)||'secOverview';
+  document.querySelectorAll('#app main > section.feature').forEach(el=>{el.style.display=el.id===sec?'':'none'});
+  SECTIONS.forEach(s=>{const b=$('nav_'+s[0]);if(b)b.classList.toggle('on',s[0]===sec)});
+  if(window.innerWidth>=1020&&!(state.settings&&state.settings.sideClosed))document.body.classList.add('side-open');
+}
 function init(){
   load();
   dedupeLocal();
   smartRetag_();
+  sideInit();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
   const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};
@@ -1496,8 +1548,38 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
     window.scrollTo(0,0);
     if(v==='app'&&window.renderAll)requestAnimationFrame(()=>setTimeout(()=>{try{window.renderAll()}catch(e){}},60));
   }
+  function setupDoneMap(){state.settings=state.settings||{};state.settings.setupDone=state.settings.setupDone||{};return state.settings.setupDone}
+  function setupCheck_(){
+    const d=setupDoneMap();
+    let fu='';try{fu=localStorage.getItem('ml_feed_url')||''}catch(e){}
+    if(fu)d.connect=true;
+    try{if(localStorage.getItem('ml_income'))d.budget=true}catch(e){}
+    try{if(Object.keys(state.budgets||{}).some(k=>state.budgets[k]>0))d.budget=true}catch(e){}
+    save();
+    return d;
+  }
+  function renderSetupChecks(){
+    const d=setupDoneMap();
+    const map={2:'feed',3:'connect',4:'budget',5:'sms'};
+    document.querySelectorAll('#setup .step').forEach((el,i)=>{
+      const k=map[i+1];
+      const old=el.querySelector('.done-pill');if(old)old.remove();
+      if(k&&d[k]){const p=document.createElement('div');p.className='done-pill';p.textContent='\u2713 Completed';el.insertBefore(p,el.firstChild)}
+    });
+    document.querySelectorAll('.sdot').forEach((el,i)=>{
+      const k=map[i+1];el.classList.toggle('done',!!(k&&d[k]));
+    });
+  }
+  const _hook=(id,fn)=>{const el=$(id);if(el)el.addEventListener('click',fn)};
+  _hook('copyScript',()=>{setupDoneMap().feed=true;save();renderSetupChecks()});
+  _hook('budSaveBtn',()=>{setupDoneMap().budget=true;save();renderSetupChecks()});
+  _hook('budAuto',()=>{setupDoneMap().budget=true;save();renderSetupChecks()});
+  _hook('smsCopy',()=>{setupDoneMap().sms=true;save();renderSetupChecks()});
+  _hook('skipSms',()=>{setupDoneMap().sms=true;save();renderSetupChecks()});
   let step=1;
   function goStep(n){
+    setupCheck_();renderSetupChecks();
+    step=n;
     step=n;
     document.querySelectorAll('#setup .step').forEach((el,i)=>el.classList.toggle('on',i+1===n));
     document.querySelectorAll('.sdot').forEach((el,i)=>el.classList.toggle('on',i+1<=n));

@@ -1248,9 +1248,13 @@ function centerFull(){
     +`<div class="dc-sub">${D.count} payment${D.count===1?'':'s'}</div>`;
 }
 function normalizeCats_(){let n=0;state.tx.forEach(t=>{if(!CATS[t.cat]){t.cat='other';n++}});if(n)save()}
-function purgeDemo_(){let u='';try{u=localStorage.getItem('ml_feed_url')||''}catch(e){}
-  if(!u)return;const b=state.tx.length;
-  state.tx=state.tx.filter(t=>!String(t.id||'').startsWith('demo-'));
+const DEMO_SIGS='2026-09-01|61530|income|monthly salary,2026-09-03|18420|expense|room rent,2026-09-05|3265|expense|electricity + wifi,2026-09-07|6250|expense|mutual fund SIP,2026-09-29|1502|expense|utility,2026-09-05|1600|expense|bowling,2026-09-19|193|expense|coffee run,2026-09-19|1428|expense|utility,2026-09-14|263|expense|groceries,2026-09-22|1082|expense|swiggy order,2026-09-12|959|expense|groceries,2026-09-01|730|expense|subscription,2026-09-17|220|expense|gaming,2026-09-24|1369|expense|dinner out,2026-09-15|2101|expense|pharmacy,2026-09-07|3378|expense|household,2026-09-15|199|expense|swiggy order,2026-09-29|734|expense|utility,2026-09-22|1071|expense|myntra,2026-09-05|499|expense|subscription,2026-10-14|334|expense|movie night,2026-09-01|1473|expense|utility,2026-10-24|284|expense|coffee run,2026-09-08|199|expense|subscription,2026-10-13|1053|expense|utility,2026-09-15|813|expense|utility,2026-10-01|1556|expense|pharmacy,2026-10-24|963|expense|movie night,2026-09-30|689|expense|zomato,2026-10-05|3748|expense|amazon order,2026-09-18|2066|expense|pharmacy,2026-09-29|772|expense|pharmacy,2026-10-17|1464|expense|utility,2026-09-06|556|expense|swiggy order,2026-10-05|1022|expense|groceries,2026-10-04|2242|expense|pharmacy,2026-10-25|499|expense|subscription,2026-10-05|313|expense|auto,2026-10-22|1176|expense|dinner out,2026-09-27|785|expense|misc,2026-09-23|652|expense|groceries,2026-10-11|779|expense|amazon order,2026-10-18|1382|expense|misc,2026-09-06|917|expense|pharmacy,2026-09-13|1043|expense|movie night,2026-09-03|1526|expense|pharmacy,2026-09-19|299|expense|subscription,2026-09-23|1307|expense|coffee run,2026-09-13|500|expense|misc,2026-09-18|307|expense|metro card,2026-10-17|447|expense|coffee run,2026-10-13|453|expense|auto,2026-09-08|1011|expense|bowling,2026-10-12|1603|expense|misc,2026-09-05|788|expense|misc,2026-10-02|730|expense|subscription,2026-09-27|12430|income|design gig,2026-09-19|8875|income|web project'.split(',');
+function purgeDemo_(){
+  let u='';try{u=localStorage.getItem('ml_feed_url')||''}catch(e){}
+  if(!u&&!state.tx.some(t=>t.src))return;
+  const b=state.tx.length,S=new Set(DEMO_SIGS);
+  const sig=t=>String(t.date||'')+'|'+Number(t.amount||0)+'|'+String(t.type||'')+'|'+String(t.note||'');
+  state.tx=state.tx.filter(t=>!String(t.id||'').startsWith('demo-')&&!(S.has(sig(t))&&!t.src&&!t.bank));
   if(state.tx.length!==b){save();renderAll();toast('Cleaned '+(b-state.tx.length)+' old demo transactions')}}
 function drawDonut(){
   const c=$('donutChart'),key=state.ui.month;

@@ -1404,14 +1404,14 @@ function hideTip(){tip.style.opacity=0}
 /* ---------- wiring ---------- */
 function syncMonthUI(){$('monthLabel').textContent=monthLabel(state.ui.month)}
 function dedupeLocal(){
-  if(state.deduped)return;
+  if(state.deduped2)return;
   const gn=n=>/^(idfc debit|sms debit|sms credit|bank debit|bank credit|income)$/i.test(n||'');
   const gap=(a,b)=>{if(!a||!b)return 0;const p=x=>x.split(':').map(Number);return Math.abs((p(a)[0]*60+p(a)[1])-(p(b)[0]*60+p(b)[1]))};
-  const isDup=(a,b)=>a.date===b.date&&a.amount===b.amount&&a.type===b.type&&!(a.bank&&b.bank&&a.bank!==b.bank)&&((a.ref&&b.ref)?a.ref===b.ref:gap(a.time,b.time)<=10);
+  const isDup=(a,b)=>a.date===b.date&&a.amount===b.amount&&a.type===b.type&&!(a.bank&&b.bank&&a.bank!==b.bank)&&((a.ref&&b.ref)?a.ref===b.ref:gap(a.time,b.time)<=20);
   for(let i=0;i<state.tx.length;i++)for(let j=state.tx.length-1;j>i;j--){
     if(isDup(state.tx[i],state.tx[j])){const k=state.tx[i],o=state.tx[j];if(!k.time&&o.time)k.time=o.time;if(!k.bank&&o.bank)k.bank=o.bank;if(!k.ref&&o.ref)k.ref=o.ref;if(o.src==='email'&&k.src!=='email')k.src='email';if(gn(k.note)&&!gn(o.note)){k.note=o.note;k.cat=autoCat_(k)}state.tx.splice(j,1)}
   }
-  state.deduped=true;save();
+  state.deduped2=true;state.deduped=true;save();
 }
 function smartRetag_(){
   if(state.settings&&state.settings.smartTagged)return;

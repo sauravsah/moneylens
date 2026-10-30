@@ -1548,7 +1548,7 @@ function init(){
     const inp=row.querySelector('.qin');const txt=inp?inp.value.trim():'';
     const chip=e.target.closest('[data-cat]');
     if(chip){saveQuickTag(t.id,chip.dataset.cat,txt)}
-    else if(e.target.closest('[data-act="qsave"]')){saveQuickTag(t.id,matchCatLabel(txt)||t.cat,txt)}
+    else if(e.target.closest('[data-act="qsave"]')){const hit=matchCatLabel(txt);saveQuickTag(t.id,hit||(txt.length>=2?makeCat(txt,t.type):t.cat),txt)}
     else if(e.target.closest('[data-act="qnew"]')){if(txt.length>=2)saveQuickTag(t.id,makeCat(txt,t.type),txt)}
   });
   $('txList').addEventListener('input',e=>{

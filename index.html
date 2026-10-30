@@ -581,11 +581,12 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
     <section class="grid-2">
       <div class="card">
         <canvas id="barChart" class="chart"></canvas>
-        <div class="legend"><span><i class="sw" style="background:var(--inc);color:var(--inc)"></i>Income<b id="legInc"></b></span><span><i class="sw" style="background:var(--exp);color:var(--exp)"></i>Expenses<b id="legExp"></b></span></div>
+        <div class="legend"><span><i class="sw" style="background:var(--inc);color:var(--inc)"></i>Income<b id="legInc"></b></span><span><i class="sw" style="background:var(--exp);color:var(--exp)"></i>Expenses<b id="legExp"></b></span></div><div class="sm" style="color:#5c6479;margin-top:8px">Tap a bar to open that month's transactions</div>
       </div>
       <div class="card">
         <div class="donut-wrap"><canvas id="donutChart"></canvas><div id="donutCenter"></div></div>
         <div class="dlegend" id="donutLegend"></div>
+        <div class="sm" style="color:#5c6479;padding:10px 4px 0">Tap a slice or a legend row to open its transactions</div>
       </div>
     </section>
     <section class="card chart-detail" id="chartDetail" style="display:none">
@@ -1235,7 +1236,8 @@ function drawBars(){
 }
 function drawDonut(){
   const c=$('donutChart'),key=state.ui.month;
-  const byCat={};state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense').forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const mtx=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
+  const byCat={},cnt={};mtx.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+t.amount;cnt[t.cat]=(cnt[t.cat]||0)+1});
   const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const total=rows.reduce((a,r)=>a+r[1],0);
   $('donutSub').textContent=monthLabel(key);
@@ -1255,7 +1257,7 @@ function drawDonut(){
   const lg=$('donutLegend');lg.innerHTML='';
   rows.slice(0,6).forEach(([cat,v])=>{
     const r=document.createElement('div');r.className='row';r.dataset.cat=cat;r.style.cursor='pointer';
-    r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${CATS[cat].c}"></span><span class="nm">${CATS[cat].i} ${CATS[cat].l}</span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;
+    r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${CATS[cat].c}"></span><span class="nm">${CATS[cat].i} ${CATS[cat].l} <span style="color:#5c6479;font-size:10.5px;font-weight:500">&middot; ${cnt[cat]} payment${cnt[cat]===1?'':'s'}</span></span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;
     lg.appendChild(r);
   });
   if(rows.length>6){const r=document.createElement('div');r.className='row';r.innerHTML=`<span class="nm" style="padding-left:18px">+${rows.length-6} more categories</span><span class="amt">${fmtk(rows.slice(6).reduce((s,x)=>s+x[1],0))}</span><span class="pc"></span>`;lg.appendChild(r)}

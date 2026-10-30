@@ -716,7 +716,7 @@ function matchCatLabel(text){
 function saveQuickTag(id,cat,note){
   const t=state.tx.find(x=>x.id===id);if(!t)return;
   if(cat)t.cat=cat;if(note)t.note=note.slice(0,60);
-  t.review=false;if(cat)learnTag_(note||t.note,cat);save();renderAll();
+  t.review=false;t.m=true;if(cat)learnTag_(note||t.note,cat);save();renderAll();
   toast('Tagged · '+CATS[t.cat].l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''));
 }
 function qtagHtml(t){
@@ -828,7 +828,7 @@ function autoCat_(t){
   const n=String(t.note||'').toLowerCase();
   const m=[
     ['rent',/rent|landlord|\bpg\b|hostel/],
-    ['groceries',/blinkit|zepto|bigbasket|instamart|dmart|jiomart|grocer|kirana|more ?supermarket/],
+    ['groceries',/blinkit|zepto|bigbasket|instamart|dmart|jiomart|grocer|kirana|more ?supermarket|horticulture|vegetable|fruits|sabzi|mandi|provision/],
     ['gym',/gym|cult\.?fit|fitness|crossfit/],
     ['electricity',/electricity|mseb|bescom|bijli|torrent ?power|power ?bill/],
     ['phone',/jiofiber|broadband|fibernet|hathway|airtel ?xstream|tata ?play|internet ?bill/],
@@ -846,8 +846,8 @@ function autoCat_(t){
     ['care',/salon|spa|barber|laundry/],
     ['gifts',/\bgift\b|donation|temple|\bseva\b/],
     ['fun',/bookmyshow|game|steam|playstation|xbox/],
-    ['transport',/uber|ola\b|rapido|metro|petrol|fuel|indian oil|fastag|parking/],
-    ['shopping',/amazon|flipkart|myntra|zudio|ajio|meesho|nykaa|\bshop\b|store|\bmart\b/],
+    ['transport',/uber|ola\b|rapido|metro|petrol|fuel|indian oil|fastag|parking|shadowfax|delhivery|dtdc|bluedart|courier/],
+    ['shopping',/amazon|flipkart|myntra|zudio|ajio|meesho|nykaa|\bshop\b|store|\bmart\b|reliance retail|reliance smart|vishal|pantaloons|westside/],
     ['food',/zomato|swiggy|chai|restaurant|cafe|domino|pizza|kfc|starbucks|\bbar\b|dinner|lunch|food/]
   ];
   for(var i=0;i<m.length;i++)if(m[i][1].test(n))return m[i][0];
@@ -1174,7 +1174,7 @@ function saveTx(){
   if(!$('mDate').value){toast('Pick a date');return}
   const type=document.querySelector('#segType button.on').dataset.t;
   const data={type,amount:amt,cat:$('mCat').value,date:$('mDate').value,note:$('mNote').value.trim()};
-  if(editingId){const t=state.tx.find(x=>x.id===editingId);Object.assign(t,data);t.review=false;if(data.cat)learnTag_(data.note||t.note,data.cat);toast('Updated')}
+  if(editingId){const t=state.tx.find(x=>x.id===editingId);Object.assign(t,data);t.review=false;t.m=true;if(data.cat)learnTag_(data.note||t.note,data.cat);toast('Updated')}
   else{state.tx.push({id:uid(),...data});toast(type==='income'?'Income added 🎉':'Expense added')}
   save();
   state.ui.month=mKey(data.date);
@@ -1201,9 +1201,22 @@ function dedupeLocal(){
   }
   state.deduped=true;save();
 }
+function smartRetag_(){
+  if(state.settings&&state.settings.smartTagged)return;
+  let n=0;
+  state.tx.forEach(t=>{
+    if(t.type!=='expense'||t.cat!=='other'||t.m||t.review===false)return;
+    const c=autoCat_(t);
+    if(c&&c!=='other'){t.cat=c;n++;}
+  });
+  state.settings=state.settings||{};state.settings.smartTagged=true;
+  save();
+  if(n)toast('Smart re-tag: '+n+' transaction'+(n===1?'':'s')+' recategorized');
+}
 function init(){
   load();
   dedupeLocal();
+  smartRetag_();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
   const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};

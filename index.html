@@ -1364,6 +1364,7 @@ try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expens
   if(bac)bac.onclick=()=>{if(!bform)return;const open=bform.style.display==='none';bform.style.display=open?'flex':'none';if(open){const ni=$('budNewName');if(ni)ni.focus()}};
   const bna=$('budNewAdd');
   if(bna)bna.onclick=()=>{
+    budRead();
     const nm=($('budNewName').value||'').trim();
     if(!nm){toast('Give the category a name first');return}
     const g=$('budNewGroup').value;
@@ -1386,6 +1387,7 @@ try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expens
     const mk=(wid,cats)=>{const w=$(wid);w.innerHTML='';cats.forEach(c=>{
       const d=document.createElement('div');d.className='bud-row';
       d.innerHTML='<span>'+BUD_LAB[c]+'</span><input type="number" min="0" id="bud_'+c+'" value="'+(budVals[c]||'')+'" placeholder="0">';
+      const inp=d.querySelector('input');if(inp)inp.addEventListener('input',function(){budRead();budPaint();});
       w.appendChild(d);});};
     mk('budNeedsRows',NEEDS);mk('budWantsRows',WANTS);mk('budSavRows',SAVINGS);
   }

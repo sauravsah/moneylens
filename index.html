@@ -116,6 +116,7 @@ canvas.chart{width:100%;height:270px;display:block}
 .bud-ctl label{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)}
 .bud-ctl select{background:var(--surface);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:7px 10px;font-family:inherit;font-size:12.5px;cursor:pointer;transition:.2s}
 select option,select optgroup{background:#15151f;color:#e8eaf0}
+.srcb{font-size:9.5px;font-weight:600;padding:1px 7px;border-radius:20px;background:rgba(139,124,255,.14);color:#a5b4fc;margin-left:3px}
 .bud-ctl select:hover{border-color:var(--line2)}
 .budget-list{display:flex;flex-direction:column;gap:15px}
 .bud{display:grid;grid-template-columns:46px 1fr 118px;gap:13px;align-items:center;padding:10px;border-radius:16px;transition:.25s}
@@ -813,11 +814,11 @@ function mergeTxns(incoming,quiet,markReview){
     if(!t||!(t.amount>0)||!t.date)return;
     const k=key(t);
     if(seen.has(k)){
-      if(t.time||t.bank){const ex=state.tx.find(x=>key(x)===k);if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;}}
+      if(t.time||t.bank||t.src){const ex=state.tx.find(x=>key(x)===k);if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;}}
       return;
     }
     seen.add(k);
-    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,time:t.time||'',bank:t.bank||'',note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
+    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||'',note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
     added++;
   });
   if(added){renderAll();toast('Synced '+added+' new transaction'+(added===1?'':'s')+' · tag them below')}
@@ -1089,7 +1090,7 @@ function renderList(){
     const c=CATS[t.cat]||{l:(t.cat||'Other'),i:'\u2753',c:'#94a3b8'};
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
-      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${t.review?'Untagged':c.l}</div></div>
+      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${t.review?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}</div></div>
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
       if(t.review){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
@@ -1142,8 +1143,19 @@ function hideTip(){tip.style.opacity=0}
 
 /* ---------- wiring ---------- */
 function syncMonthUI(){$('monthLabel').textContent=monthLabel(state.ui.month)}
+function dedupeLocal(){
+  if(state.deduped)return;
+  const gn=n=>/^(idfc debit|sms debit|sms credit|bank debit|bank credit|income)$/i.test(n||'');
+  const gap=(a,b)=>{if(!a||!b)return 0;const p=x=>x.split(':').map(Number);return Math.abs((p(a)[0]*60+p(a)[1])-(p(b)[0]*60+p(b)[1]))};
+  const isDup=(a,b)=>a.date===b.date&&a.amount===b.amount&&a.type===b.type&&!(a.bank&&b.bank&&a.bank!==b.bank)&&((a.ref&&b.ref)?a.ref===b.ref:gap(a.time,b.time)<=10);
+  for(let i=0;i<state.tx.length;i++)for(let j=state.tx.length-1;j>i;j--){
+    if(isDup(state.tx[i],state.tx[j])){const k=state.tx[i],o=state.tx[j];if(!k.time&&o.time)k.time=o.time;if(!k.bank&&o.bank)k.bank=o.bank;if(!k.ref&&o.ref)k.ref=o.ref;if(o.src==='email'&&k.src!=='email')k.src='email';if(gn(k.note)&&!gn(o.note)){k.note=o.note;k.cat=autoCat_(k)}state.tx.splice(j,1)}
+  }
+  state.deduped=true;save();
+}
 function init(){
   load();
+  dedupeLocal();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
   const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};

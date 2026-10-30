@@ -422,7 +422,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 .dc-delta{font-size:11px;font-weight:600;margin-top:3px}
 .dc-delta.up{color:#fb7185}
 .dc-delta.down{color:#34d399}
-.dc-sub{font-size:10.5px;color:#8b93a7;margin-top:2px}
+.dc-sub{font-size:10px;color:#8b93a7;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1245,7 +1245,7 @@ function centerFull(){
   const dl=ltot>0?D.total-ltot:0;
   $('donutCenter').innerHTML=`<div class="big">${fmtk(D.total)}</div><div class="sm">spent total</div>`
     +(ltot>0&&dl!==0?`<div class="dc-delta ${dl>0?'up':'down'}">${dl>0?'\u25b2':'\u25bc'} ${fmtk(Math.abs(dl))} vs last month</div>`:'')
-    +`<div class="dc-sub">${D.count} payment${D.count===1?'':'s'} this month</div>`;
+    +`<div class="dc-sub">${D.count} payment${D.count===1?'':'s'}</div>`;
 }
 function normalizeCats_(){let n=0;state.tx.forEach(t=>{if(!CATS[t.cat]){t.cat='other';n++}});if(n)save()}
 function drawDonut(){

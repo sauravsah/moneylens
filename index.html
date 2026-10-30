@@ -628,9 +628,12 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
     </div>
     <section class="card">
       <div class="bud-stats" id="budStats"></div>
-      <div class="sm bud-guide" id="budGuide"></div>
-      <div class="bud-ctl"><label>Cycle starts on</label><select id="salDay"></select><button class="chip" id="b503020">Apply 50/30/20</button></div>
-      <div class="budget-list" id="budgetList"></div>
+      <div id="budMore" style="display:none">
+        <div class="sm bud-guide" id="budGuide"></div>
+        <div class="bud-ctl"><label>Cycle starts on</label><select id="salDay"></select><button class="chip" id="b503020">Apply 50/30/20</button></div>
+        <div class="budget-list" id="budgetList"></div>
+      </div>
+      <div class="pmore" id="budMoreBtn">See more \u25be</div>
     </section>
   </section>
 
@@ -1125,7 +1128,7 @@ let barGeom=[];
 function genericNote_(n){const s=String(n||'').toLowerCase().replace(/\s+/g,' ').trim();return /^(idfc debit|sms debit|sms credit|bank debit|bank credit)$/.test(s)}
 function payeeLabel_(t){return genericNote_(t.note)?'Unnamed bank alerts':(t.note||'')}
 function daysInMonth_(key){const y=+key.split('-')[0],m=+key.split('-')[1];return new Date(y,m,0).getDate()}
-let payeesOpen=false,donutMoreOpen=false;
+let payeesOpen=false,donutMoreOpen=false,budMoreOpen=false;
 function renderInsightsExtra(){
   const key=state.ui.month;if(!$('insExtra'))return;
   const exp=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
@@ -1443,6 +1446,7 @@ function init(){
   purgeDemo_();
   settingsPopInit();
   state.ui.month=mKey(todayStr());
+  const bmb=$('budMoreBtn');if(bmb)bmb.onclick=()=>{budMoreOpen=!budMoreOpen;const bm=$('budMore');if(bm)bm.style.display=budMoreOpen?'':'none';bmb.textContent=budMoreOpen?'See less \u25b4':'See more \u25be';};
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
   const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};
   syncMonthUI();renderAll();

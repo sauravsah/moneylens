@@ -728,6 +728,7 @@ const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function monthShift(key,n){const[y,m]=key.split('-').map(Number);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function monthLabel(key){const[y,m]=key.split('-').map(Number);return MON[m-1]+' '+y}
 function prettyDate(d){const[y,m,dd]=d.split('-').map(Number);return dd+' '+MON[m-1]}
+function fmtTime(t){const m=String(t||'').match(/^(\d{1,2}):(\d{2})$/);if(!m)return '';let h=+m[1];const ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+m[2]+' '+ap}
 
 /* ---------- seed ---------- */
 function seed(){
@@ -809,7 +810,7 @@ function mergeTxns(incoming,quiet,markReview){
   (incoming||[]).forEach(t=>{
     if(!t||!(t.amount>0)||!t.date)return;
     const k=key(t);if(seen.has(k))return;seen.add(k);
-    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
+    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,time:t.time||'',note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
     added++;
   });
   if(added){renderAll();toast('Synced '+added+' new transaction'+(added===1?'':'s')+' · tag them below')}
@@ -1071,7 +1072,7 @@ function renderList(){
     const c=CATS[t.cat]||{l:(t.cat||'Other'),i:'\u2753',c:'#94a3b8'};
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
-      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)} · ${t.review?'Untagged':c.l}</div></div>
+      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${t.review?'Untagged':c.l}</div></div>
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
       if(t.review){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}

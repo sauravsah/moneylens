@@ -115,6 +115,7 @@ canvas.chart{width:100%;height:270px;display:block}
 .bud-ctl{display:flex;gap:10px;align-items:center;margin:0 0 16px;font-size:12px;color:var(--mut);flex-wrap:wrap}
 .bud-ctl label{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)}
 .bud-ctl select{background:var(--surface);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:7px 10px;font-family:inherit;font-size:12.5px;cursor:pointer;transition:.2s}
+select option,select optgroup{background:#15151f;color:#e8eaf0}
 .bud-ctl select:hover{border-color:var(--line2)}
 .budget-list{display:flex;flex-direction:column;gap:15px}
 .bud{display:grid;grid-template-columns:46px 1fr 118px;gap:13px;align-items:center;padding:10px;border-radius:16px;transition:.25s}
@@ -558,6 +559,7 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         <button class="chip" data-type="expense">Expense</button>
         <button class="chip" id="fUntagged">Untagged</button>
         <select id="fCat"><option value="all">All categories</option></select>
+        <select id="fBank"><option value="all">All banks</option></select>
         <input id="fQ" type="search" placeholder="Search notes&#8230;">
       </div>
       <div class="tx-list" id="txList"></div>
@@ -716,7 +718,7 @@ const LS='moneylens_v2';
 const SYNC_URL=(function(){try{var u=localStorage.getItem('ml_feed_url');if(u)return u;return localStorage.getItem('ml_manual')?'':''}catch(e){return ''}})();
 const SYNC_BATCH='demo-batch';
 const SYNC=[{"id":"demo-000","type":"income","amount":61530,"cat":"salary","date":"2026-09-01","note":"monthly salary"},{"id":"demo-001","type":"expense","amount":18420,"cat":"rent","date":"2026-09-03","note":"room rent"},{"id":"demo-002","type":"expense","amount":3265,"cat":"bills","date":"2026-09-05","note":"electricity + wifi"},{"id":"demo-003","type":"expense","amount":6250,"cat":"invest","date":"2026-09-07","note":"mutual fund SIP"},{"id":"demo-004","type":"expense","amount":1502,"cat":"bills","date":"2026-09-29","note":"utility"},{"id":"demo-005","type":"expense","amount":1600,"cat":"fun","date":"2026-09-05","note":"bowling"},{"id":"demo-006","type":"expense","amount":193,"cat":"food","date":"2026-09-19","note":"coffee run"},{"id":"demo-007","type":"expense","amount":1428,"cat":"bills","date":"2026-09-19","note":"utility"},{"id":"demo-008","type":"expense","amount":263,"cat":"food","date":"2026-09-14","note":"groceries"},{"id":"demo-009","type":"expense","amount":1082,"cat":"food","date":"2026-09-22","note":"swiggy order"},{"id":"demo-010","type":"expense","amount":959,"cat":"food","date":"2026-09-12","note":"groceries"},{"id":"demo-011","type":"expense","amount":730,"cat":"subscriptions","date":"2026-09-01","note":"subscription"},{"id":"demo-012","type":"expense","amount":220,"cat":"fun","date":"2026-09-17","note":"gaming"},{"id":"demo-013","type":"expense","amount":1369,"cat":"food","date":"2026-09-24","note":"dinner out"},{"id":"demo-014","type":"expense","amount":2101,"cat":"health","date":"2026-09-15","note":"pharmacy"},{"id":"demo-015","type":"expense","amount":3378,"cat":"shopping","date":"2026-09-07","note":"household"},{"id":"demo-016","type":"expense","amount":199,"cat":"food","date":"2026-09-15","note":"swiggy order"},{"id":"demo-017","type":"expense","amount":734,"cat":"bills","date":"2026-09-29","note":"utility"},{"id":"demo-018","type":"expense","amount":1071,"cat":"shopping","date":"2026-09-22","note":"myntra"},{"id":"demo-019","type":"expense","amount":499,"cat":"subscriptions","date":"2026-09-05","note":"subscription"},{"id":"demo-020","type":"expense","amount":334,"cat":"fun","date":"2026-10-14","note":"movie night"},{"id":"demo-021","type":"expense","amount":1473,"cat":"bills","date":"2026-09-01","note":"utility"},{"id":"demo-022","type":"expense","amount":284,"cat":"food","date":"2026-10-24","note":"coffee run"},{"id":"demo-023","type":"expense","amount":199,"cat":"subscriptions","date":"2026-09-08","note":"subscription"},{"id":"demo-024","type":"expense","amount":1053,"cat":"bills","date":"2026-10-13","note":"utility"},{"id":"demo-025","type":"expense","amount":813,"cat":"bills","date":"2026-09-15","note":"utility"},{"id":"demo-026","type":"expense","amount":1556,"cat":"health","date":"2026-10-01","note":"pharmacy"},{"id":"demo-027","type":"expense","amount":963,"cat":"fun","date":"2026-10-24","note":"movie night"},{"id":"demo-028","type":"expense","amount":689,"cat":"food","date":"2026-09-30","note":"zomato"},{"id":"demo-029","type":"expense","amount":3748,"cat":"shopping","date":"2026-10-05","note":"amazon order"},{"id":"demo-030","type":"expense","amount":2066,"cat":"health","date":"2026-09-18","note":"pharmacy"},{"id":"demo-031","type":"expense","amount":772,"cat":"health","date":"2026-09-29","note":"pharmacy"},{"id":"demo-032","type":"expense","amount":1464,"cat":"bills","date":"2026-10-17","note":"utility"},{"id":"demo-033","type":"expense","amount":556,"cat":"food","date":"2026-09-06","note":"swiggy order"},{"id":"demo-034","type":"expense","amount":1022,"cat":"food","date":"2026-10-05","note":"groceries"},{"id":"demo-035","type":"expense","amount":2242,"cat":"health","date":"2026-10-04","note":"pharmacy"},{"id":"demo-036","type":"expense","amount":499,"cat":"subscriptions","date":"2026-10-25","note":"subscription"},{"id":"demo-037","type":"expense","amount":313,"cat":"transport","date":"2026-10-05","note":"auto"},{"id":"demo-038","type":"expense","amount":1176,"cat":"food","date":"2026-10-22","note":"dinner out"},{"id":"demo-039","type":"expense","amount":785,"cat":"other","date":"2026-09-27","note":"misc"},{"id":"demo-040","type":"expense","amount":652,"cat":"food","date":"2026-09-23","note":"groceries"},{"id":"demo-041","type":"expense","amount":779,"cat":"shopping","date":"2026-10-11","note":"amazon order"},{"id":"demo-042","type":"expense","amount":1382,"cat":"other","date":"2026-10-18","note":"misc"},{"id":"demo-043","type":"expense","amount":917,"cat":"health","date":"2026-09-06","note":"pharmacy"},{"id":"demo-044","type":"expense","amount":1043,"cat":"fun","date":"2026-09-13","note":"movie night"},{"id":"demo-045","type":"expense","amount":1526,"cat":"health","date":"2026-09-03","note":"pharmacy"},{"id":"demo-046","type":"expense","amount":299,"cat":"subscriptions","date":"2026-09-19","note":"subscription"},{"id":"demo-047","type":"expense","amount":1307,"cat":"food","date":"2026-09-23","note":"coffee run"},{"id":"demo-048","type":"expense","amount":500,"cat":"other","date":"2026-09-13","note":"misc"},{"id":"demo-049","type":"expense","amount":307,"cat":"transport","date":"2026-09-18","note":"metro card"},{"id":"demo-050","type":"expense","amount":447,"cat":"food","date":"2026-10-17","note":"coffee run"},{"id":"demo-051","type":"expense","amount":453,"cat":"transport","date":"2026-10-13","note":"auto"},{"id":"demo-052","type":"expense","amount":1011,"cat":"fun","date":"2026-09-08","note":"bowling"},{"id":"demo-053","type":"expense","amount":1603,"cat":"other","date":"2026-10-12","note":"misc"},{"id":"demo-054","type":"expense","amount":788,"cat":"other","date":"2026-09-05","note":"misc"},{"id":"demo-055","type":"expense","amount":730,"cat":"subscriptions","date":"2026-10-02","note":"subscription"},{"id":"demo-056","type":"income","amount":12430,"cat":"freelance","date":"2026-09-27","note":"design gig"},{"id":"demo-057","type":"income","amount":8875,"cat":"freelance","date":"2026-09-19","note":"web project"}];
-let state={tx:[],budgets:{food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290},customCats:[],settings:{salaryDay:0},recIgnore:[],ui:{month:null,type:'all',cat:'all',q:'',untagged:false}};
+let state={tx:[],budgets:{food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290},customCats:[],settings:{salaryDay:0},recIgnore:[],ui:{month:null,type:'all',cat:'all',bank:'all',q:'',untagged:false}};
 let editingId=null;
 
 const $=id=>document.getElementById(id);
@@ -811,11 +813,11 @@ function mergeTxns(incoming,quiet,markReview){
     if(!t||!(t.amount>0)||!t.date)return;
     const k=key(t);
     if(seen.has(k)){
-      if(t.time){const ex=state.tx.find(x=>key(x)===k);if(ex&&!ex.time)ex.time=t.time;}
+      if(t.time||t.bank){const ex=state.tx.find(x=>key(x)===k);if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;}}
       return;
     }
     seen.add(k);
-    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,time:t.time||'',note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
+    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,time:t.time||'',bank:t.bank||'',note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
     added++;
   });
   if(added){renderAll();toast('Synced '+added+' new transaction'+(added===1?'':'s')+' · tag them below')}
@@ -910,7 +912,16 @@ function renderRecurring(){
       +'<button class="chip" data-rx="'+r.amt+'" title="Not recurring">×</button></div>';
   }).join('');
 }
-function renderAll(){[renderStats,renderBudgets,renderCharts,renderRecurring,renderList].forEach(f=>{try{f()}catch(e){console.warn(e)}})}
+const BANKS={idfc:'IDFC First',hdfc:'HDFC Bank',sbi:'SBI',axis:'Axis Bank',icici:'ICICI',kotak:'Kotak'};
+function paintBanks(){
+  const sel=$('fBank');if(!sel)return;
+  const set={};state.tx.forEach(t=>{if(t.bank)set[t.bank]=1});
+  let cur=state.ui.bank||'all';
+  sel.innerHTML='<option value="all">All banks</option>'+Object.keys(set).map(b=>'<option value="'+b+'">'+(BANKS[b]||b.toUpperCase())+'</option>').join('');
+  if(cur!=='all'&&!set[cur]){state.ui.bank='all';cur='all'}
+  sel.value=cur;
+}
+function renderAll(){[renderStats,renderBudgets,renderCharts,renderRecurring,paintBanks,renderList].forEach(f=>{try{f()}catch(e){console.warn(e)}})}
 
 function countUp(el,target,suffix,pct){
   const start=parseFloat(el.dataset.v||0)||0;el.dataset.v=target;
@@ -1065,6 +1076,7 @@ function filtered(){
     .filter(t=>state.ui.type==='all'||t.type===state.ui.type)
     .filter(t=>!state.ui.untagged||t.review)
     .filter(t=>state.ui.cat==='all'||t.cat===state.ui.cat)
+    .filter(t=>state.ui.bank==='all'||t.bank===state.ui.bank)
     .filter(t=>!q||(t.note||'').toLowerCase().includes(q)||CATS[t.cat].l.toLowerCase().includes(q))
     .sort((a,b)=>b.date.localeCompare(a.date));
 }
@@ -1134,6 +1146,7 @@ function init(){
   load();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
+  const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};
   syncMonthUI();renderAll();
   if(SYNC_URL){pullSync();setInterval(pullSync,120000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullSync()})}
   const ab=$('alertBtn');

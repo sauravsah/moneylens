@@ -419,6 +419,10 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 .setm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 #insExtra{margin-top:14px;display:flex;flex-direction:column;gap:14px}
 .ichips{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.dc-delta{font-size:11px;font-weight:600;margin-top:3px}
+.dc-delta.up{color:#fb7185}
+.dc-delta.down{color:#34d399}
+.dc-sub{font-size:10.5px;color:#8b93a7;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1234,30 +1238,40 @@ function drawBars(){
     ctx.fillText(MON[+k.split('-')[1]-1],cx,h-8);
   });
 }
+function catMeta(c){return CATS[c]||{l:'Other',i:'\u2753',c:'#94a3b8'}}
+function centerFull(){
+  const D=window._donut;if(!D)return;
+  const ltot=state.tx.filter(t=>mKey(t.date)===monthShift(D.key,-1)&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const dl=ltot>0?D.total-ltot:0;
+  $('donutCenter').innerHTML=`<div class="big">${fmtk(D.total)}</div><div class="sm">spent total</div>`
+    +(ltot>0&&dl!==0?`<div class="dc-delta ${dl>0?'up':'down'}">${dl>0?'\u25b2':'\u25bc'} ${fmtk(Math.abs(dl))} vs last month</div>`:'')
+    +`<div class="dc-sub">${D.count} payment${D.count===1?'':'s'} this month</div>`;
+}
+function normalizeCats_(){let n=0;state.tx.forEach(t=>{if(!CATS[t.cat]){t.cat='other';n++}});if(n)save()}
 function drawDonut(){
   const c=$('donutChart'),key=state.ui.month;
   const mtx=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
-  const byCat={},cnt={};mtx.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+t.amount;cnt[t.cat]=(cnt[t.cat]||0)+1});
+  const byCat={},cnt={};mtx.forEach(t=>{const cc=CATS[t.cat]?t.cat:'other';byCat[cc]=(byCat[cc]||0)+t.amount;cnt[cc]=(cnt[cc]||0)+1});
   const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const total=rows.reduce((a,r)=>a+r[1],0);
   $('donutSub').textContent=monthLabel(key);
   const _s=setup(c);if(!_s)return;const{ctx,w,h}=_s;const cx=w/2,cy=h/2,R=Math.min(w,h)/2-6,r0=R*.62;
-  window._donut={rows,total,cx,cy,R,r0};
+  window._donut={rows,total,cx,cy,R,r0,key:key,count:mtx.length};
   if(!total){ctx.clearRect(0,0,w,h);$('donutCenter').innerHTML='<div class="sm">no expenses this month 🎉</div>';$('donutLegend').innerHTML='<div class="empty" style="padding:14px">Nothing spent yet</div>';return}
   let a=-Math.PI/2;const slices=[];
   ctx.clearRect(0,0,w,h);
   rows.forEach(([cat,v])=>{
     const a2=a+v/total*Math.PI*2;
     ctx.beginPath();ctx.arc(cx,cy,R,a+.015,a2-.015);ctx.arc(cx,cy,r0,a2-.015,a+.015,true);ctx.closePath();
-    ctx.fillStyle=CATS[cat].c;ctx.fill();
+    ctx.fillStyle=catMeta(cat).c;ctx.fill();
     slices.push({a0:a,a1:a2,cat,v});a=a2;
   });
   window._donut.slices=slices;
-  center(total,'spent total');
+  centerFull();
   const lg=$('donutLegend');lg.innerHTML='';
   rows.slice(0,6).forEach(([cat,v])=>{
     const r=document.createElement('div');r.className='row';r.dataset.cat=cat;r.style.cursor='pointer';
-    r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${CATS[cat].c}"></span><span class="nm">${CATS[cat].i} ${CATS[cat].l} <span style="color:#5c6479;font-size:10.5px;font-weight:500">&middot; ${cnt[cat]} payment${cnt[cat]===1?'':'s'}</span></span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;
+    r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${catMeta(cat).c}"></span><span class="nm">${catMeta(cat).i} ${catMeta(cat).l}</span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;
     lg.appendChild(r);
   });
   if(rows.length>6){const r=document.createElement('div');r.className='row';r.innerHTML=`<span class="nm" style="padding-left:18px">+${rows.length-6} more categories</span><span class="amt">${fmtk(rows.slice(6).reduce((s,x)=>s+x[1],0))}</span><span class="pc"></span>`;lg.appendChild(r)}
@@ -1410,6 +1424,7 @@ function init(){
   load();
   dedupeLocal();
   smartRetag_();
+  normalizeCats_();
   settingsPopInit();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
@@ -1601,11 +1616,11 @@ function init(){
     if(dist>r0-2&&dist<R+4){
       let ang=Math.atan2(dy,dx)+Math.PI/2;if(ang<0)ang+=Math.PI*2;
       const s=window._donut.slices.find(s=>ang>=s.a0&&ang<=s.a1);
-      if(s){showTip(e.clientX,e.clientY,CATS[s.cat].i+' '+CATS[s.cat].l+' · '+fmt(s.v)+' ('+Math.round(s.v/window._donut.total*100)+'%)');center(s.v,CATS[s.cat].l);return}
+      if(s){showTip(e.clientX,e.clientY,catMeta(s.cat).i+' '+catMeta(s.cat).l+' · '+fmt(s.v)+' ('+Math.round(s.v/window._donut.total*100)+'%)');center(s.v,catMeta(s.cat).l);return}
     }
-    hideTip();center(window._donut.total,'spent total');
+    hideTip();centerFull();
   });
-  dc.addEventListener('mouseleave',()=>{hideTip();if(window._donut)center(window._donut.total,'spent total')});
+  dc.addEventListener('mouseleave',()=>{hideTip();if(window._donut)centerFull()});
   bc.addEventListener('click',e=>{
     const r=bc.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
     const hit=barGeom.find(g=>x>=g.x&&x<=g.x+g.w&&y>=g.y&&y<=g.y+g.h);
@@ -1620,13 +1635,13 @@ function init(){
     if(dist>r0-2&&dist<R+4){
       let ang=Math.atan2(dy,dx)+Math.PI/2;if(ang<0)ang+=Math.PI*2;
       const s=window._donut.slices.find(s=>ang>=s.a0&&ang<=s.a1);
-      if(s){window._cdQ={mode:'cat',cat:s.cat};showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===s.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+CATS[s.cat].l)}
+      if(s){window._cdQ={mode:'cat',cat:s.cat};showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===s.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+catMeta(s.cat).l)}
     }
   });
   $('donutLegend').addEventListener('click',e=>{
     const row=e.target.closest('.row');if(!row||!row.dataset.cat)return;
     window._cdQ={mode:'cat',cat:row.dataset.cat};
-    showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===row.dataset.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+CATS[row.dataset.cat].l);
+    showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===row.dataset.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+catMeta(row.dataset.cat).l);
   });
   let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderCharts,120)});
 }

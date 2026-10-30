@@ -1430,7 +1430,7 @@ try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expens
     const lc=$('lnkConnect'); if(lc)lc.onclick=e=>{e.preventDefault();startSetup();};
     const lh=$('lnkHome'); if(lh)lh.onclick=e=>{e.preventDefault();show('landing');};
   }
-  function startSetup(){show('setup'); goStep(1);}
+  function startSetup(){let ok=false;try{ok=!!(localStorage.getItem(KEY_DONE)||localStorage.getItem(KEY_URL))}catch(e){} if(ok){show('app');return;} show('setup'); goStep(1);}
   ['ctaStart','ctaStart2','ctaStart3'].forEach(id=>{const b=$(id); if(b)b.onclick=startSetup;});
   const nx=$('setupNext');
   nx.onclick=()=>{ if(step>=6){finish();} else { if(step===3)saveUrl(); if(step===4)saveBudget(); goStep(step+1);} };
@@ -1478,9 +1478,7 @@ try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expens
     if(v==='setup'){show('setup');const st=parseInt(q.get('step')||'1');goStep(isNaN(st)?1:Math.min(6,Math.max(1,st)));return;}
     if(v==='landing'){show('landing');return;}
     if(v==='app'){show('app');return;}
-    let done=false,url=false;
-    try{ done=!!localStorage.getItem(KEY_DONE); url=!!localStorage.getItem(KEY_URL); }catch(e){}
-    if(done||url) show('app'); else show('landing');
+    show('landing');
     manualUI();
   }
   boot();

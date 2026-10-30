@@ -224,6 +224,7 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 .fab:active{transform:scale(.9)}
 footer{max-width:1180px;margin:0 auto;padding:14px clamp(16px,4vw,40px) 44px;color:var(--mut2);font-size:12px;line-height:2}
 footer::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--inc);box-shadow:0 0 10px rgba(52,211,153,.7);animation:pulse 2.4s ease-in-out infinite;vertical-align:middle;margin-right:7px}
+.demoBanner{position:fixed;left:12px;right:12px;bottom:14px;z-index:60;background:#fbbf24;color:#111827;font-weight:600;padding:11px 14px;border-radius:14px;font-size:12.5px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);text-align:center;display:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -776,8 +777,10 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 
 <footer>Auto-synced from your Gmail bank alerts &middot; everything stays in this browser &middot; <button class="flink" id="alertBtn" style="background:none;border:0;padding:0;cursor:pointer;font:inherit">turn on alerts</button> &middot; <a class="flink" id="lnkSetup" href="#">setup</a> &middot; <a class="flink" id="lnkSms" href="#">SMS setup</a> &middot; <a class="flink" id="lnkSettings" href="#secSettings">settings</a> &middot; <a class="flink" id="lnkReport" href="#">missing transaction?</a> · <a class="flink" id="lnkHome" href="#">home</a></footer>
 </div>
+<div class="demoBanner" id="demoBanner">Sample data — tap to connect your feed and see your real money</div>
 
 <script>
+try{var _fp=new URLSearchParams(location.search).get('feed');if(_fp&&/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(_fp))localStorage.setItem('ml_feed_url',_fp);}catch(e){}
 'use strict';
 const CATS={
   salary:{l:'Salary',i:'💼',c:'#34d399',t:'income'},
@@ -1467,6 +1470,8 @@ function init(){
   smartRetag_();
   normalizeCats_();
   purgeDemo_();
+  try{const hasReal=state.tx.some(t=>String(t.id||'').indexOf('demo-')!==0);
+  if(!SYNC_URL&&!hasReal){const db=$('demoBanner');if(db){db.style.display='block';db.onclick=()=>{const ov=$('setOverlay');if(ov)ov.classList.add('on')}}}}catch(e){}
   settingsPopInit();
   state.ui.month=mKey(todayStr());
   const bmb=$('budMoreBtn');if(bmb)bmb.onclick=()=>{budMoreOpen=!budMoreOpen;const bm=$('budMore');if(bm)bm.style.display=budMoreOpen?'':'none';bmb.textContent=budMoreOpen?'See less ▴':'See more ▾';};

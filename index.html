@@ -1361,7 +1361,11 @@ function renderList(){
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
       if(t.review){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
-    d.addEventListener('click',()=>openModal(t));
+    d.addEventListener('click',e=>{
+      if(e.target.closest('.qtag'))return;
+      if(!t.m&&(t.cat==='other'||t.cat==='otherin')&&!t.review){t.review=true;save();renderList();return}
+      openModal(t);
+    });
     wrap.appendChild(d);
   });
 }

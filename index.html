@@ -1354,7 +1354,7 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
     if(n===4){const bi=$('budIncome');if(bi&&!bi.value){try{const iv=localStorage.getItem('ml_income');if(iv)bi.value=iv}catch(e){}}budRows();budPaint();}
     $('setupNext').textContent = n===1?'Start':n<6?'Continue':'Open MoneyLens';
   }
-  const NEEDS=['rent','bills','transport','health','food','groceries','education','electricity','phone','recharge','emi','loan','family'],WANTS=['shopping','fun','other','subscriptions','travel','care','gifts','gym','cardbill'],SAVINGS=['invest'];
+  const NEEDS=['rent','bills','transport','health','groceries','education','family'],WANTS=['food','shopping','fun','gifts','other'],SAVINGS=['invest'];
   const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',education:'Education',shopping:'Shopping',fun:'Entertainment',other:'Others',subscriptions:'Subscription',travel:'Travel',care:'Personal care',gifts:'Gifts &amp; donations',invest:'Investments · SIP',groceries:'Groceries',gym:'Gym',recharge:'Recharge',phone:'Phone &amp; internet',electricity:'Electricity',family:'Family/Sending home',emi:'EMI',loan:'Loan',cardbill:'Card bill'};
   const BUD_DEF={food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290,subscriptions:730,education:1740,travel:2210,care:640,gifts:560,invest:6250,groceries:4200,gym:1500,recharge:400,phone:1200,electricity:900,family:3000,emi:2500,loan:1500,cardbill:1200};
 try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense'&&!BUD_LAB[c.slug]){BUD_LAB[c.slug]=c.l;BUD_DEF[c.slug]=0;(c.g==='needs'?NEEDS:c.g==='savings'?SAVINGS:WANTS).push(c.slug)}})}catch(e){}

@@ -179,6 +179,19 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 .qtag .chip{padding:5px 11px;font-size:11.5px}
 .qin{background:var(--surface);border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:7px 11px;font-size:12.5px;font-family:inherit;min-width:160px;flex:1;outline:none;transition:.2s}
 .qin:focus{border-color:var(--acc1);box-shadow:0 0 0 3px rgba(139,124,255,.18)}
+@media(max-width:560px){
+  .tx{padding:10px 11px;gap:10px}
+  .qtag{gap:8px;margin-top:9px;padding-top:9px}
+  .qtag .chip{padding:9px 13px;font-size:12.5px}
+  .qin{flex:1 1 100%;min-width:0;padding:11px 12px;font-size:16px}
+  .field input,.field select{font-size:16px}
+  .seg button{padding:11px}
+  .modal{padding:22px 18px;border-radius:22px}
+  .modal .acts{gap:8px}
+  .modal .acts .primary{padding:12px}
+  .modal .acts .ghost{padding:12px}
+  .modal .acts .danger{padding:12px}
+}
 
 /* ---------- modal ---------- */
 .overlay{position:fixed;inset:0;background:rgba(3,5,10,.7);backdrop-filter:blur(10px);z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
@@ -1448,6 +1461,7 @@ function settingsPopInit(){
 }
 function init(){
   load();
+  try{if(new URLSearchParams(location.search).get('qa')==='tag'){state.tx.push({id:'qa1',type:'expense',amount:240,cat:'other',date:todayStr(),note:'Test merchant pay',src:'sms',review:true});}}catch(e){}
   dedupeLocal();
   smartRetag_();
   normalizeCats_();

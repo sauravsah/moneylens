@@ -359,6 +359,16 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
 .rmeta{color:var(--mut2);font-size:12px;margin-top:3px}
 .rok{color:#34d399;font-weight:600}
 .rmiss{color:#fbbf24;font-weight:600}
+.chart-detail{margin-top:14px}
+.cd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cd-title{font-weight:600;font-size:14px}
+.cd-list{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.cd-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:rgba(255,255,255,.02)}
+.cd-row .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.cd-row .meta{flex:1;min-width:0}
+.cd-row .t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-row .s{font-size:11px;color:#8b93a7}
+.cd-row .amt{font-weight:700;font-size:13px;flex:none}
 </style>
 </head>
 <body>
@@ -526,6 +536,10 @@ body.light{background:linear-gradient(180deg,#f7f9fe 0%,#eef1f8 100%)}
         <div class="donut-wrap"><canvas id="donutChart"></canvas><div id="donutCenter"></div></div>
         <div class="dlegend" id="donutLegend"></div>
       </div>
+    </section>
+    <section class="card chart-detail" id="chartDetail" style="display:none">
+      <div class="cd-head"><span class="cd-title" id="cdTitle"></span><button class="chip" id="cdClose">Close</button></div>
+      <div class="cd-list" id="cdList"></div>
     </section>
   </section>
 
@@ -1024,8 +1038,31 @@ function spark(id,vals,color,isPct){
 }
 
 let barGeom=[];
+function cdSort(a,b){return b.date.localeCompare(a.date)||b.amount-a.amount}
+function showChartDetail(rows,title){
+  const d=$('chartDetail');if(!d)return;
+  $('cdTitle').textContent=title;
+  const list=$('cdList');
+  if(!rows.length){list.innerHTML='<div class="empty" style="padding:10px">Nothing here</div>';}
+  else list.innerHTML=rows.map(t=>{
+    const c=CATS[t.cat]||{l:'Other',i:'\u2753',c:'#94a3b8'};
+    return `<div class="cd-row"><div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div><div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${c.l}</div></div><div class="amt">${t.type==='income'?'+':'\u2212'}${fmt(t.amount)}</div></div>`;
+  }).join('');
+  d.style.display='';
+  if(!d._wired){d._wired=1;$('cdClose').onclick=()=>{d.style.display='none'}}
+}
+function refreshChartDetail(){
+  const d=$('chartDetail');if(!d||d.style.display==='none'||!window._cdQ)return;
+  if(window._cdQ.mode==='month'){
+    const q=window._cdQ;
+    showChartDetail(state.tx.filter(t=>mKey(t.date)===q.k&&t.type===q.side).sort(cdSort),monthLabel(q.k)+' · '+(q.side==='income'?'Income':'Expenses'));
+  }else{
+    const cat=window._cdQ.cat,c=CATS[cat]||{l:cat};
+    showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===cat).sort(cdSort),monthLabel(state.ui.month)+' · '+c.l);
+  }
+}
 function renderCharts(){
-  drawBars();drawDonut();
+  drawBars();drawDonut();refreshChartDetail();
   const key=state.ui.month;
   const inc=sum(t=>mKey(t.date)===key&&t.type==='income'),exp=sum(t=>mKey(t.date)===key&&t.type==='expense');
   $('legInc').textContent=fmtk(inc);$('legExp').textContent=fmtk(exp);
@@ -1046,7 +1083,7 @@ function drawBars(){
       const bh=(h-pad.t-pad.b)*v/max,x=cx+(side===-1?-gap/2-bw:gap/2),y=h-pad.b-bh;
       const g=ctx.createLinearGradient(0,y,0,h-pad.b);g.addColorStop(0,col);g.addColorStop(1,col+'44');
       ctx.fillStyle=g;rr(ctx,x,y,bw,bh,5);ctx.fill();
-      barGeom.push({x:x-4,y:y-4,w:bw+8,h:bh+8,label:monthLabel(k)+' · '+(side===-1?'Income ':'Expenses ')+fmt(v)});
+      barGeom.push({x:x-4,y:y-4,w:bw+8,h:bh+8,k:k,side:side===-1?'income':'expense',label:monthLabel(k)+' · '+(side===-1?'Income ':'Expenses ')+fmt(v)});
     });
     ctx.fillStyle='rgba(139,147,167,.9)';ctx.font='600 10.5px Inter,sans-serif';ctx.textAlign='center';
     ctx.fillText(MON[+k.split('-')[1]-1],cx,h-8);
@@ -1073,7 +1110,7 @@ function drawDonut(){
   center(total,'spent total');
   const lg=$('donutLegend');lg.innerHTML='';
   rows.slice(0,6).forEach(([cat,v])=>{
-    const r=document.createElement('div');r.className='row';
+    const r=document.createElement('div');r.className='row';r.dataset.cat=cat;r.style.cursor='pointer';
     r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${CATS[cat].c}"></span><span class="nm">${CATS[cat].i} ${CATS[cat].l}</span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;
     lg.appendChild(r);
   });
@@ -1412,6 +1449,28 @@ function init(){
     hideTip();center(window._donut.total,'spent total');
   });
   dc.addEventListener('mouseleave',()=>{hideTip();if(window._donut)center(window._donut.total,'spent total')});
+  bc.addEventListener('click',e=>{
+    const r=bc.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+    const hit=barGeom.find(g=>x>=g.x&&x<=g.x+g.w&&y>=g.y&&y<=g.y+g.h);
+    if(!hit||!hit.k)return;
+    window._cdQ={mode:'month',k:hit.k,side:hit.side};
+    showChartDetail(state.tx.filter(t=>mKey(t.date)===hit.k&&t.type===hit.side).sort(cdSort),monthLabel(hit.k)+' · '+(hit.side==='income'?'Income':'Expenses'));
+  });
+  dc.addEventListener('click',e=>{
+    if(!window._donut||!window._donut.slices)return;
+    const r=dc.getBoundingClientRect(),dx=(e.clientX-r.left)-r.width/2,dy=(e.clientY-r.top)-r.height/2;
+    const dist=Math.hypot(dx,dy),R=r.width/2-6,r0=R*.62;
+    if(dist>r0-2&&dist<R+4){
+      let ang=Math.atan2(dy,dx)+Math.PI/2;if(ang<0)ang+=Math.PI*2;
+      const s=window._donut.slices.find(s=>ang>=s.a0&&ang<=s.a1);
+      if(s){window._cdQ={mode:'cat',cat:s.cat};showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===s.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+CATS[s.cat].l)}
+    }
+  });
+  $('donutLegend').addEventListener('click',e=>{
+    const row=e.target.closest('.row');if(!row||!row.dataset.cat)return;
+    window._cdQ={mode:'cat',cat:row.dataset.cat};
+    showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===row.dataset.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+CATS[row.dataset.cat].l);
+  });
   let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderCharts,120)});
 }
 init();

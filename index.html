@@ -1248,6 +1248,10 @@ function centerFull(){
     +`<div class="dc-sub">${D.count} payment${D.count===1?'':'s'}</div>`;
 }
 function normalizeCats_(){let n=0;state.tx.forEach(t=>{if(!CATS[t.cat]){t.cat='other';n++}});if(n)save()}
+function purgeDemo_(){let u='';try{u=localStorage.getItem('ml_feed_url')||''}catch(e){}
+  if(!u)return;const b=state.tx.length;
+  state.tx=state.tx.filter(t=>!String(t.id||'').startsWith('demo-'));
+  if(state.tx.length!==b){save();renderAll();toast('Cleaned '+(b-state.tx.length)+' old demo transactions')}}
 function drawDonut(){
   const c=$('donutChart'),key=state.ui.month;
   const mtx=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
@@ -1262,7 +1266,8 @@ function drawDonut(){
   ctx.clearRect(0,0,w,h);
   rows.forEach(([cat,v])=>{
     const a2=a+v/total*Math.PI*2;
-    ctx.beginPath();ctx.arc(cx,cy,R,a+.015,a2-.015);ctx.arc(cx,cy,r0,a2-.015,a+.015,true);ctx.closePath();
+    const gp=Math.min(.015,(a2-a)*.3);
+    ctx.beginPath();ctx.arc(cx,cy,R,a+gp,a2-gp);ctx.arc(cx,cy,r0,a2-gp,a+gp,true);ctx.closePath();
     ctx.fillStyle=catMeta(cat).c;ctx.fill();
     slices.push({a0:a,a1:a2,cat,v});a=a2;
   });
@@ -1425,6 +1430,7 @@ function init(){
   dedupeLocal();
   smartRetag_();
   normalizeCats_();
+  purgeDemo_();
   settingsPopInit();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
@@ -1580,6 +1586,7 @@ function init(){
       const list=Array.isArray(j)?j:(j.transactions||[]);
       const known=new Set(state.tx.map(t=>t.id));
       if(mergeTxns(list,true,true)){save();notifyNew(list.filter(t=>t&&t.id&&!known.has(t.id)))}
+      purgeDemo_();
       if(Array.isArray(j.reports)){const nr=j.reports.filter(r=>r&&r.text);const prev=JSON.stringify(state.reports||[]);state.reports=nr.slice(-20).reverse();if(JSON.stringify(state.reports)!==prev){save();renderReports()}}
     }).catch(()=>{});
   }

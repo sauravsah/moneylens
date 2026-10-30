@@ -610,7 +610,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <div class="card">
           <div class="cd-title" style="margin-bottom:12px">Top payees this month</div>
           <div id="topPayees"></div>
-          <div class="sm" style="color:#5c6479;margin-top:10px">Bank alerts without a merchant name group as "Unnamed bank alerts".</div>
+          <div class="sm" id="payeeNote" style="color:#5c6479;margin-top:10px">Bank alerts without a merchant name group as "Unnamed bank alerts".</div>
         </div>
       </section>
       <section class="card">
@@ -1171,7 +1171,7 @@ function renderInsightsExtra(){
   }).join(''):'<div class="empty" style="padding:10px">No expenses yet</div>';
   let tHtml2=tHtml;
   if(topAll.length>3)tHtml2+='<div class="pmore">'+(payeesOpen?'Show fewer payees \u25b4':'+ '+(topAll.length-3)+' more payees \u25be')+'</div>';
-  $('topPayees').innerHTML=tHtml2;
+  $('topPayees').innerHTML=tHtml2;const pn=$('payeeNote');if(pn)pn.style.display=payeesOpen?'':'none';
   const tp=$('topPayees');
   if(!tp._w){tp._w=1;tp.addEventListener('click',e=>{
     if(e.target.closest('.pmore')){payeesOpen=!payeesOpen;renderInsightsExtra();return}

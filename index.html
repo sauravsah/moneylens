@@ -809,7 +809,12 @@ function mergeTxns(incoming,quiet,markReview){
   const seen=new Set(state.tx.map(key));
   (incoming||[]).forEach(t=>{
     if(!t||!(t.amount>0)||!t.date)return;
-    const k=key(t);if(seen.has(k))return;seen.add(k);
+    const k=key(t);
+    if(seen.has(k)){
+      if(t.time){const ex=state.tx.find(x=>key(x)===k);if(ex&&!ex.time)ex.time=t.time;}
+      return;
+    }
+    seen.add(k);
     state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:autoCat_(t),date:t.date,time:t.time||'',note:t.note||'',review:t.review!=null?!!t.review:!!markReview});
     added++;
   });

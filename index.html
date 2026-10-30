@@ -385,6 +385,38 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 .snav.on{background:rgba(56,189,248,.12);color:#7dd3fc;border-color:rgba(56,189,248,.25)}
 .snav .sn{font-size:10px;color:#5c6479;letter-spacing:.08em;min-width:20px}
 @media(min-width:1020px){body.side-open #app main{margin-left:246px}body.side-open #app header{margin-left:238px}}
+.chipstat{border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02)}
+.chipstat .v{font-weight:700;font-size:15px}
+.chipstat .s{font-size:11px;color:#8b93a7;margin-top:2px}
+.hrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.hrow .hl{width:124px;font-size:11.5px;color:#aab2c8;flex:none}
+.hrow .hb{flex:1;height:10px;border-radius:6px;background:rgba(255,255,255,.05);overflow:hidden}
+.hrow .hf{height:100%;background:linear-gradient(90deg,#fb7185,#fb718588);border-radius:6px}
+.hrow .hv{font-size:12px;font-weight:700;min-width:52px;text-align:right}
+.daystrip{display:flex;align-items:flex-end;gap:2px;height:52px}
+.dbar{flex:1;background:linear-gradient(180deg,#fb7185,#fb718544);border-radius:2px 2px 0 0;cursor:pointer;min-height:2px}
+.dbar:hover{outline:1px solid rgba(255,255,255,.25)}
+.dbar.today{outline:1px solid #7dd3fc}
+.prow{display:flex;align-items:center;gap:10px;padding:7px 0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
+.prow:last-child{border-bottom:none}
+.prow .pl{flex:1;min-width:0}
+.prow .pn{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .ps{font-size:11px;color:#8b93a7}
+.prow .pv{font-weight:700;font-size:13px;flex:none}
+.pbar{width:70px;height:6px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;flex:none}
+.pbar>div{height:100%;background:#f472b6;border-radius:4px}
+.mrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px}
+.mrow:last-child{border-bottom:none}
+.mrow .mk{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e7ebf7;font-weight:600}
+.mrow .mv{font-weight:700}
+.mrow .md{font-weight:700;min-width:74px;text-align:right}
+.mrow .md.up{color:#fb7185}
+.mrow .md.down{color:#34d399}
+.mrow .ml{color:#5c6479;min-width:84px;text-align:right}
+#setOverlay{position:fixed;inset:0;background:rgba(2,4,10,.72);display:none;align-items:flex-start;justify-content:center;z-index:80;padding:18px;overflow:auto}
+#setOverlay.on{display:flex}
+.set-modal{background:#0a0f1e;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.setm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -507,15 +539,8 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 </section>
 
 <div id="app" class="view">
-<aside id="sidebar">
-  <div class="side-head"><div class="logo">MoneyLens<span>sections</span></div><button id="sideClose" class="sbtn" title="Hide sidebar">&larr;</button></div>
-  <nav id="sideNav"></nav>
-  <div class="sm" style="color:#5c6479;padding:0 4px">Tap a section to open it. The arrow tucks the menu away; the &#9776; button brings it back.</div>
-</aside>
-<div id="sideBackdrop"></div>
 <header>
   <div class="logo">MoneyLens<span>personal finance</span></div>
-  <button id="sideOpen" class="ghost" style="padding:6px 11px" title="Sections">&#9776;</button>
   <div class="month-nav">
     <button id="prevM" aria-label="Previous month">&#8249;</button>
     <div id="monthLabel"></div>
@@ -525,6 +550,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
   <button id="importBtn" class="ghost">Sync</button>
   <button id="exportBtn" class="ghost">Export</button>
   <button id="repBtn" class="ghost" title="A payment didn’t land? Report the bank alert">Something missing?</button>
+  <button id="setPop" class="ghost" title="Settings" style="padding:6px 11px">&#9881;</button>
   <input id="importFile" type="file" accept=".json,application/json" style="display:none">
   <button id="addBtn" class="primary">+ Add transaction</button>
 </header>
@@ -564,6 +590,26 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
       <div class="cd-head"><span class="cd-title" id="cdTitle"></span><button class="chip" id="cdClose">Close</button></div>
       <div class="cd-list" id="cdList"></div>
     </section>
+    <div id="insExtra">
+      <div class="ichips" id="ichips"></div>
+      <section class="grid-2">
+        <div class="card">
+          <div class="cd-title" style="margin-bottom:12px">Spending rhythm</div>
+          <div id="weekBars"></div>
+          <div class="sm" style="color:#8b93a7;margin:14px 0 6px">Daily burn &middot; tap a day for its transactions</div>
+          <div id="dayStrip" class="daystrip"></div>
+        </div>
+        <div class="card">
+          <div class="cd-title" style="margin-bottom:12px">Top payees this month</div>
+          <div id="topPayees"></div>
+          <div class="sm" style="color:#5c6479;margin-top:10px">Bank alerts without a merchant name group as "Unnamed bank alerts". Tap any row for its transactions.</div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="cd-title" style="margin-bottom:12px">Month over month</div>
+        <div id="momRows"></div>
+      </section>
+    </div>
   </section>
 
   <section class="feature" id="secBudgets">
@@ -669,6 +715,13 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
   </main>
 
 <button class="fab" id="fabBtn">+</button>
+
+<div id="setOverlay">
+  <div class="set-modal">
+    <div class="setm-head"><span class="cd-title">Settings</span><button class="sbtn" id="setClose" title="Close">&times;</button></div>
+    <div id="setBody"></div>
+  </div>
+</div>
 
 <div class="overlay" id="overlay">
   <div class="modal">
@@ -1061,6 +1114,67 @@ function spark(id,vals,color,isPct){
 }
 
 let barGeom=[];
+function genericNote_(n){const s=String(n||'').toLowerCase().replace(/\s+/g,' ').trim();return /^(idfc debit|sms debit|sms credit|bank debit|bank credit)$/.test(s)}
+function payeeLabel_(t){return genericNote_(t.note)?'Unnamed bank alerts':(t.note||'')}
+function daysInMonth_(key){const y=+key.split('-')[0],m=+key.split('-')[1];return new Date(y,m,0).getDate()}
+function renderInsightsExtra(){
+  const key=state.ui.month;if(!$('insExtra'))return;
+  const exp=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
+  const inc=state.tx.filter(t=>mKey(t.date)===key&&t.type==='income').reduce((a,t)=>a+t.amount,0);
+  const tot=exp.reduce((a,t)=>a+t.amount,0);
+  const isCur=mKey(todayStr())===key,dim=daysInMonth_(key);
+  const days=isCur?Math.max(1,new Date().getDate()):dim;
+  const untag=state.tx.filter(t=>mKey(t.date)===key&&(t.cat==='other'||t.cat==='otherin')).length;
+  let big=null;exp.forEach(t=>{if(!big||t.amount>big.amount)big=t});
+  const chips=[
+    [String(exp.length)+' payments',(state.tx.filter(t=>mKey(t.date)===key&&t.type==='income').length)+' income \u00b7 '+untag+' untagged'],
+    [fmtk(Math.round(tot/days))+' /day','avg over '+days+' day'+(days===1?'':'s')],
+    [big?fmt(big.amount):'\u2014',big?('biggest \u00b7 '+(big.note||'').slice(0,22)):'no expenses yet'],
+    [inc>0?Math.round(Math.max(0,inc-tot)/inc*100)+'% saved':'\u2014',inc>0?('of '+fmtk(inc)+' income'):'no income logged']
+  ];
+  $('ichips').innerHTML=chips.map(c=>'<div class="chipstat"><div class="v">'+c[0]+'</div><div class="s">'+c[1]+'</div></div>').join('');
+  const wk=[[1,7],[8,14],[15,21],[22,dim]];
+  const wkRows=wk.map((r,i)=>{
+    const s=exp.filter(t=>{const d=+t.date.slice(8,10);return d>=r[0]&&d<=r[1]}).reduce((a,t)=>a+t.amount,0);
+    return {l:'Week '+(i+1)+' \u00b7 '+String(r[0]).padStart(2,'0')+'-'+String(Math.min(r[1],dim)).padStart(2,'0'),v:s};
+  });
+  const wmax=Math.max.apply(null,wkRows.map(w=>w.v).concat([1]));
+  $('weekBars').innerHTML=wkRows.map(w=>'<div class="hrow"><span class="hl">'+w.l+'</span><div class="hb"><div class="hf" style="width:'+Math.round(w.v/wmax*100)+'%"></div></div><span class="hv">'+(w.v?fmtk(w.v):'\u2014')+'</span></div>').join('');
+  const byDay={};exp.forEach(t=>{const d=+t.date.slice(8,10);byDay[d]=(byDay[d]||0)+t.amount});
+  const dmax=Math.max.apply(null,Object.values(byDay).concat([1]));
+  let strip='';
+  for(let d=1;d<=dim;d++){
+    const v=byDay[d]||0,ds=key+'-'+String(d).padStart(2,'0');
+    strip+='<div class="dbar'+(isCur&&d===new Date().getDate()?' today':'')+'" title="'+prettyDate(ds)+' \u00b7 '+(v?fmt(v):'no spend')+'" data-day="'+ds+'" style="height:'+(v?Math.max(3,Math.round(v/dmax*46)):2)+'px"></div>';
+  }
+  const dsel=$('dayStrip');dsel.innerHTML=strip;
+  if(!dsel._w){dsel._w=1;dsel.addEventListener('click',e=>{
+    const el=e.target.closest('.dbar');if(!el||!el.dataset.day)return;
+    window._cdQ={mode:'day',d:el.dataset.day};
+    showChartDetail(state.tx.filter(t=>t.date===el.dataset.day).sort(cdSort),prettyDate(el.dataset.day)+' \u00b7 Money in and out');
+  })}
+  const grp={};exp.forEach(t=>{const k=payeeLabel_(t);if(!grp[k])grp[k]={v:0,n:0};grp[k].v+=t.amount;grp[k].n++});
+  const top=Object.entries(grp).sort((a,b)=>b[1].v-a[1].v).slice(0,6);
+  $('topPayees').innerHTML=top.length?top.map(pair=>{
+    const k=pair[0],g=pair[1],pct=Math.round(g.v/tot*100);
+    return '<div class="prow" data-note="'+k.replace(/"/g,'&quot;')+'"><div class="pl"><div class="pn">'+k+'</div><div class="ps">'+g.n+' payment'+(g.n===1?'':'s')+' \u00b7 '+pct+'% of spend</div></div><div class="pv">'+fmtk(g.v)+'</div><div class="pbar"><div style="width:'+pct+'%"></div></div></div>';
+  }).join(''):'<div class="empty" style="padding:10px">No expenses yet</div>';
+  const tp=$('topPayees');
+  if(!tp._w){tp._w=1;tp.addEventListener('click',e=>{
+    const row=e.target.closest('.prow');if(!row||!row.dataset.note)return;
+    window._cdQ={mode:'payee',p:row.dataset.note};
+    showChartDetail(state.tx.filter(t=>payeeLabel_(t)===row.dataset.note&&mKey(t.date)===state.ui.month&&t.type==='expense').sort(cdSort),monthLabel(state.ui.month)+' \u00b7 '+row.dataset.note);
+  })}
+  const pk=monthShift(key,-1);
+  const lexp=state.tx.filter(t=>mKey(t.date)===pk&&t.type==='expense');
+  const lgrp={};lexp.forEach(t=>{const k=payeeLabel_(t);lgrp[k]=(lgrp[k]||0)+t.amount});
+  const all=Object.keys(grp).concat(Object.keys(lgrp).filter(k=>!grp[k]));
+  const rows=all.map(k=>({k:k,v:grp[k]?grp[k].v:0,lv:lgrp[k]||0})).sort((x,y)=>(y.v+y.lv)-(x.v+x.lv)).slice(0,6);
+  $('momRows').innerHTML=rows.length?rows.map(r=>{
+    const d=r.v-r.lv,cls=d>0?'up':(d<0?'down':''),arr=d>0?'\u25b2':(d<0?'\u25bc':'');
+    return '<div class="mrow"><span class="mk">'+r.k+'</span><span class="mv">'+fmtk(r.v)+'</span><span class="md '+cls+'">'+arr+' '+fmt(Math.abs(d))+'</span><span class="ml">was '+fmtk(r.lv)+'</span></div>';
+  }).join(''):'<div class="empty" style="padding:10px">No comparison yet</div>';
+}
 function cdSort(a,b){return b.date.localeCompare(a.date)||b.amount-a.amount}
 function showChartDetail(rows,title){
   const d=$('chartDetail');if(!d)return;
@@ -1079,13 +1193,18 @@ function refreshChartDetail(){
   if(window._cdQ.mode==='month'){
     const q=window._cdQ;
     showChartDetail(state.tx.filter(t=>mKey(t.date)===q.k&&t.type===q.side).sort(cdSort),monthLabel(q.k)+' · '+(q.side==='income'?'Income':'Expenses'));
+  }else if(window._cdQ.mode==='day'){
+    showChartDetail(state.tx.filter(t=>t.date===window._cdQ.d).sort(cdSort),prettyDate(window._cdQ.d)+' \u00b7 Money in and out');
+  }else if(window._cdQ.mode==='payee'){
+    const p=window._cdQ.p;
+    showChartDetail(state.tx.filter(t=>payeeLabel_(t)===p&&mKey(t.date)===state.ui.month&&t.type==='expense').sort(cdSort),monthLabel(state.ui.month)+' \u00b7 '+p);
   }else{
     const cat=window._cdQ.cat,c=CATS[cat]||{l:cat};
     showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===cat).sort(cdSort),monthLabel(state.ui.month)+' · '+c.l);
   }
 }
 function renderCharts(){
-  drawBars();drawDonut();refreshChartDetail();
+  drawBars();drawDonut();refreshChartDetail();renderInsightsExtra();
   const key=state.ui.month;
   const inc=sum(t=>mKey(t.date)===key&&t.type==='income'),exp=sum(t=>mKey(t.date)===key&&t.type==='expense');
   $('legInc').textContent=fmtk(inc);$('legExp').textContent=fmtk(exp);
@@ -1273,39 +1392,21 @@ function smartRetag_(){
   save();
   if(n)toast('Smart re-tag: '+n+' transaction'+(n===1?'':'s')+' recategorized');
 }
-const SECTIONS=[['secOverview','01','Overview'],['secInsights','02','Insights'],['secBudgets','03','Budgets'],['secRecurring','04','Recurring'],['secTx','05','Transactions'],['secSettings','06','Settings']];
-function buildSideNav(){
-  const nav=$('sideNav');if(!nav)return;
-  nav.innerHTML='';
-  SECTIONS.forEach(s=>{
-    const b=document.createElement('button');b.className='snav';b.id='nav_'+s[0];
-    b.innerHTML='<span class="sn">'+s[1]+'</span>'+s[2];
-    b.onclick=()=>showSection(s[0]);
-    nav.appendChild(b);
-  });
-}
-function showSection(id){
-  document.querySelectorAll('#app main > section.feature').forEach(el=>{el.style.display=el.id===id?'':'none'});
-  SECTIONS.forEach(s=>{const b=$('nav_'+s[0]);if(b)b.classList.toggle('on',s[0]===id)});
-  state.settings=state.settings||{};state.settings.section=id;save();
-  if(window.innerWidth<1020)document.body.classList.remove('side-open');
-  requestAnimationFrame(()=>setTimeout(()=>{try{renderAll()}catch(e){}},60));
-}
-function sideInit(){
-  buildSideNav();
-  const so=$('sideOpen');if(so)so.onclick=()=>{document.body.classList.add('side-open');state.settings=state.settings||{};state.settings.sideClosed=false;save()};
-  const sc=$('sideClose');if(sc)sc.onclick=()=>{document.body.classList.remove('side-open');state.settings=state.settings||{};state.settings.sideClosed=true;save()};
-  const bd=$('sideBackdrop');if(bd)bd.onclick=()=>document.body.classList.remove('side-open');
-  const sec=(state.settings&&state.settings.section)||'secOverview';
-  document.querySelectorAll('#app main > section.feature').forEach(el=>{el.style.display=el.id===sec?'':'none'});
-  SECTIONS.forEach(s=>{const b=$('nav_'+s[0]);if(b)b.classList.toggle('on',s[0]===sec)});
-  if(window.innerWidth>=1020&&!(state.settings&&state.settings.sideClosed))document.body.classList.add('side-open');
+function settingsPopInit(){
+  const sb=$('setBody'),ss=$('secSettings');
+  if(sb&&ss&&!sb.contains(ss))sb.appendChild(ss);
+  const ov=$('setOverlay');
+  const open=()=>{if(ov){ov.classList.add('on');try{renderReports()}catch(e){}}};
+  const close=()=>{if(ov)ov.classList.remove('on')};
+  const sp=$('setPop');if(sp)sp.onclick=open;
+  const scl=$('setClose');if(scl)scl.onclick=close;
+  if(ov)ov.addEventListener('click',e=>{if(e.target===ov)close()});
 }
 function init(){
   load();
   dedupeLocal();
   smartRetag_();
-  sideInit();
+  settingsPopInit();
   state.ui.month=mKey(todayStr());
   const fc=$('fCat');[...INC_CATS,...EXP_CATS].forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CATS[k].i+' '+CATS[k].l;fc.appendChild(o)});
   const fb=$('fBank');if(fb)fb.onchange=()=>{state.ui.bank=fb.value||'all';renderList()};

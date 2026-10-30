@@ -772,6 +772,7 @@ const CATS={
   otherin:{l:'Other income',i:'🎁',c:'#fbbf24',t:'income'},
   food:{l:'Food & dining',i:'🍜',c:'#fb7185',t:'expense'},
   transport:{l:'Transport',i:'🚕',c:'#f59e0b',t:'expense'},
+  officetravel:{l:'Office travel',i:'🚌',c:'#a5d8ff',t:'expense'},
   shopping:{l:'Shopping',i:'🛍️',c:'#f472b6',t:'expense'},
   bills:{l:'Bills & utilities',i:'💡',c:'#38bdf8',t:'expense'},
   rent:{l:'Rent',i:'🏠',c:'#818cf8',t:'expense'},
@@ -949,6 +950,7 @@ function autoCat_(t){
     ['care',/salon|spa|barber|laundry/],
     ['gifts',/\bgift\b|donation|temple|\bseva\b/],
     ['fun',/bookmyshow|game|steam|playstation|xbox/],
+    ['officetravel',/\bmetro\b|namma ?metro|\bbmtc\b|bus ?pass|commute|office (?:cab|bus|shuttle|travel)|daily ?pass|travel ?card/],
     ['transport',/uber|ola\b|rapido|metro|petrol|fuel|indian oil|fastag|parking|shadowfax|delhivery|dtdc|bluedart|courier/],
     ['shopping',/amazon|flipkart|myntra|zudio|ajio|meesho|nykaa|\bshop\b|store|\bmart\b|reliance retail|reliance smart|vishal|pantaloons|westside/],
     ['food',/zomato|swiggy|chai|restaurant|cafe|domino|pizza|kfc|starbucks|\bbar\b|dinner|lunch|food/]

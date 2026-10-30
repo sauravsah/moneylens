@@ -655,14 +655,27 @@ const CATS={
   bills:{l:'Bills & utilities',i:'💡',c:'#38bdf8',t:'expense'},
   rent:{l:'Rent',i:'🏠',c:'#818cf8',t:'expense'},
   health:{l:'Health',i:'🏥',c:'#4ade80',t:'expense'},
-  fun:{l:'Fun & games',i:'🎮',c:'#c084fc',t:'expense'},
-  other:{l:'Other',i:'✨',c:'#94a3b8',t:'expense'},
-  subscriptions:{l:'Subscriptions',i:'📺',c:'#60a5fa',t:'expense'},
+  fun:{l:'Entertainment',i:'🎮',c:'#c084fc',t:'expense'},
+  other:{l:'Others',i:'✨',c:'#94a3b8',t:'expense'},
+  subscriptions:{l:'Subscription',i:'📺',c:'#60a5fa',t:'expense'},
   education:{l:'Education',i:'📚',c:'#a3e635',t:'expense'},
   travel:{l:'Travel',i:'✈️',c:'#fb923c',t:'expense'},
   care:{l:'Personal care',i:'🧴',c:'#e879f9',t:'expense'},
   gifts:{l:'Gifts & donations',i:'💝',c:'#fda4af',t:'expense'},
-  invest:{l:'Investments · SIP',i:'💰',c:'#34d399',t:'expense'}
+  invest:{l:'Investments · SIP',i:'💰',c:'#34d399',t:'expense'},
+  groceries:{l:'Groceries',i:'🛒',c:'#2dd4bf',t:'expense'},
+  gym:{l:'Gym',i:'🏋️',c:'#f87171',t:'expense'},
+  recharge:{l:'Recharge',i:'📶',c:'#facc15',t:'expense'},
+  phone:{l:'Phone & internet',i:'🌐',c:'#7dd3fc',t:'expense'},
+  electricity:{l:'Electricity',i:'⚡',c:'#fdba74',t:'expense'},
+  family:{l:'Family/Sending home',i:'🏡',c:'#d8b4fe',t:'expense'},
+  emi:{l:'EMI',i:'🏦',c:'#c4b5fd',t:'expense'},
+  loan:{l:'Loan',i:'🧾',c:'#93c5fd',t:'expense'},
+  cardbill:{l:'Card bill',i:'💳',c:'#f9a8d4',t:'expense'},
+  interest:{l:'Interest',i:'🪙',c:'#6ee7b7',t:'income'},
+  cashback:{l:'Cashback',i:'💸',c:'#67e8f9',t:'income'},
+  refund:{l:'Refund',i:'↩️',c:'#86efac',t:'income'},
+  transfer:{l:'Transfer',i:'🔄',c:'#a5b4fc',t:'income'}
 };
 let EXP_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='expense');
 let INC_CATS=Object.keys(CATS).filter(k=>CATS[k].t==='income');
@@ -750,22 +763,40 @@ function seed(){
 
 /* ---------- persistence ---------- */
 function autoCat_(t){
-  if(!t||t.type!=='expense')return (t&&t.cat)||(t&&t.type==='income'?'otherin':'other');
+  if(!t)return 'other';
+  if(t.type!=='expense'){
+    if(t.cat)return t.cat;
+    if(t.type!=='income')return 'other';
+    var ni=String(t.note||'').toLowerCase();
+    if(/\binterest\b/.test(ni))return 'interest';
+    if(/cashback/.test(ni))return 'cashback';
+    if(/\brefund/.test(ni))return 'refund';
+    return 'otherin';
+  }
   if(t.cat&&t.cat!=='other')return t.cat;
   const n=String(t.note||'').toLowerCase();
   const m=[
     ['rent',/rent|landlord|\bpg\b|hostel/],
-    ['bills',/airtel|jio|vodafone|bsnl|electricity|recharge|\bbill\b|\bbills\b|emi|insurance|mseb|broadband/],
+    ['groceries',/blinkit|zepto|bigbasket|instamart|dmart|jiomart|grocer|kirana|more ?supermarket/],
+    ['gym',/gym|cult\.?fit|fitness|crossfit/],
+    ['electricity',/electricity|mseb|bescom|bijli|torrent ?power|power ?bill/],
+    ['phone',/jiofiber|broadband|fibernet|hathway|airtel ?xstream|tata ?play|internet ?bill/],
+    ['recharge',/recharge|prepaid|top ?up/],
+    ['emi',/\bemi\b|equated monthly/],
+    ['loan',/\bloan\b|credila|bajaj ?fin|home ?loan|personal ?loan/],
+    ['cardbill',/card ?bill|credit ?card ?(?:payment|bill)|cc ?payment|card ?payment/],
+    ['family',/sending ?home|\bfamily\b/],
+    ['bills',/airtel|jio|vodafone|bsnl|\bbill\b|\bbills\b|insurance/],
     ['health',/pharmacy|apollo|medplus|hospital|clinic|medical|chemist|\bmed\b/],
     ['subscriptions',/subscription|netflix|hotstar|spotify|prime video|youtube premium|google one|jiocinema|sony ?liv|zee5|icloud|adobe/],
     ['invest',/groww|zerodha|\bsip\b|mutual fund|upstox|smallcase|indmoney|\bkite\b|\bcoin\b/],
     ['education',/udemy|coursera|unacademy|byju|course|tuition|\bexam\b|certification/],
     ['travel',/makemytrip|goibibo|redbus|irctc|oyo|airbnb|flight|indigo|vistara|hotel|\btrain\b/],
-    ['care',/salon|\bgym\b|cult\.?fit|spa|barber|laundry/],
+    ['care',/salon|spa|barber|laundry/],
     ['gifts',/\bgift\b|donation|temple|\bseva\b/],
     ['fun',/bookmyshow|game|steam|playstation|xbox/],
     ['transport',/uber|ola\b|rapido|metro|petrol|fuel|indian oil|fastag|parking/],
-    ['shopping',/amazon|flipkart|myntra|zudio|ajio|meesho|nykaa|blinkit|zepto|bigbasket|dmart|\bshop\b|store|\bmart\b/],
+    ['shopping',/amazon|flipkart|myntra|zudio|ajio|meesho|nykaa|\bshop\b|store|\bmart\b/],
     ['food',/zomato|swiggy|chai|restaurant|cafe|domino|pizza|kfc|starbucks|\bbar\b|dinner|lunch|food/]
   ];
   for(var i=0;i<m.length;i++)if(m[i][1].test(n))return m[i][0];
@@ -1323,9 +1354,9 @@ setTimeout(()=>{document.querySelectorAll('.feature:not(.in)').forEach(el=>el.cl
     if(n===4){const bi=$('budIncome');if(bi&&!bi.value){try{const iv=localStorage.getItem('ml_income');if(iv)bi.value=iv}catch(e){}}budRows();budPaint();}
     $('setupNext').textContent = n===1?'Start':n<6?'Continue':'Open MoneyLens';
   }
-  const NEEDS=['rent','bills','transport','health','food','education'],WANTS=['shopping','fun','other','subscriptions','travel','care','gifts'],SAVINGS=['invest'];
-  const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',education:'Education',shopping:'Shopping',fun:'Fun &amp; games',other:'Other',subscriptions:'Subscriptions',travel:'Travel',care:'Personal care',gifts:'Gifts &amp; donations',invest:'Investments · SIP'};
-  const BUD_DEF={food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290,subscriptions:730,education:1740,travel:2210,care:640,gifts:560,invest:6250};
+  const NEEDS=['rent','bills','transport','health','food','groceries','education','electricity','phone','recharge','emi','loan','family'],WANTS=['shopping','fun','other','subscriptions','travel','care','gifts','gym','cardbill'],SAVINGS=['invest'];
+  const BUD_LAB={rent:'Rent',bills:'Bills &amp; utilities',transport:'Transport',health:'Health',food:'Food &amp; dining',education:'Education',shopping:'Shopping',fun:'Entertainment',other:'Others',subscriptions:'Subscription',travel:'Travel',care:'Personal care',gifts:'Gifts &amp; donations',invest:'Investments · SIP',groceries:'Groceries',gym:'Gym',recharge:'Recharge',phone:'Phone &amp; internet',electricity:'Electricity',family:'Family/Sending home',emi:'EMI',loan:'Loan',cardbill:'Card bill'};
+  const BUD_DEF={food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290,subscriptions:730,education:1740,travel:2210,care:640,gifts:560,invest:6250,groceries:4200,gym:1500,recharge:400,phone:1200,electricity:900,family:3000,emi:2500,loan:1500,cardbill:1200};
 try{(state.customCats||[]).forEach(c=>{if(CATS[c.slug]&&CATS[c.slug].t==='expense'&&!BUD_LAB[c.slug]){BUD_LAB[c.slug]=c.l;BUD_DEF[c.slug]=0;(c.g==='needs'?NEEDS:c.g==='savings'?SAVINGS:WANTS).push(c.slug)}})}catch(e){}
   let budVals=Object.assign({},BUD_DEF);
   const bac=$('budAddCat'),bform=$('budAddForm');

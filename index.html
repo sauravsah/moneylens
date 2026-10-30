@@ -962,7 +962,7 @@ function mergeTxns(incoming,quiet,markReview){
     if(!t||!(t.amount>0)||!t.date)return;
     const k=key(t);
     if(seen.has(k)){
-      if(t.time||t.bank||t.src){const ex=state.tx.find(x=>key(x)===k);if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;}}
+      if(t.time||t.bank||t.src||t.note){const ex=state.tx.find(x=>key(x)===k);if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;}}}
       return;
     }
     seen.add(k);

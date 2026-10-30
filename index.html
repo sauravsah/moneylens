@@ -403,6 +403,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 .prow .pn{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .prow .ps{font-size:11px;color:#8b93a7}
 .prow .pv{font-weight:700;font-size:13px;flex:none}
+.pmore{padding:9px 0 2px;font-size:12.5px;font-weight:600;color:#7dd3fc;cursor:pointer}
 .pbar{width:70px;height:6px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;flex:none}
 .pbar>div{height:100%;background:#f472b6;border-radius:4px}
 .mrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px}
@@ -1124,6 +1125,7 @@ let barGeom=[];
 function genericNote_(n){const s=String(n||'').toLowerCase().replace(/\s+/g,' ').trim();return /^(idfc debit|sms debit|sms credit|bank debit|bank credit)$/.test(s)}
 function payeeLabel_(t){return genericNote_(t.note)?'Unnamed bank alerts':(t.note||'')}
 function daysInMonth_(key){const y=+key.split('-')[0],m=+key.split('-')[1];return new Date(y,m,0).getDate()}
+let payeesOpen=false,donutMoreOpen=false;
 function renderInsightsExtra(){
   const key=state.ui.month;if(!$('insExtra'))return;
   const exp=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
@@ -1161,13 +1163,18 @@ function renderInsightsExtra(){
     showChartDetail(state.tx.filter(t=>t.date===el.dataset.day).sort(cdSort),prettyDate(el.dataset.day)+' \u00b7 Money in and out');
   })}
   const grp={};exp.forEach(t=>{const k=payeeLabel_(t);if(!grp[k])grp[k]={v:0,n:0};grp[k].v+=t.amount;grp[k].n++});
-  const top=Object.entries(grp).sort((a,b)=>b[1].v-a[1].v).slice(0,6);
-  $('topPayees').innerHTML=top.length?top.map(pair=>{
+  const topAll=Object.entries(grp).sort((a,b)=>b[1].v-a[1].v);
+  const top=payeesOpen?topAll:topAll.slice(0,4);
+  const tHtml=top.length?top.map(pair=>{
     const k=pair[0],g=pair[1],pct=Math.round(g.v/tot*100);
     return '<div class="prow" data-note="'+k.replace(/"/g,'&quot;')+'"><div class="pl"><div class="pn">'+k+'</div><div class="ps">'+g.n+' payment'+(g.n===1?'':'s')+' \u00b7 '+pct+'% of spend</div></div><div class="pv">'+fmtk(g.v)+'</div><div class="pbar"><div style="width:'+pct+'%"></div></div></div>';
   }).join(''):'<div class="empty" style="padding:10px">No expenses yet</div>';
+  let tHtml2=tHtml;
+  if(topAll.length>4)tHtml2+='<div class="pmore">'+(payeesOpen?'Show fewer payees \u25b4':'+ '+(topAll.length-4)+' more payees \u25be')+'</div>';
+  $('topPayees').innerHTML=tHtml2;
   const tp=$('topPayees');
   if(!tp._w){tp._w=1;tp.addEventListener('click',e=>{
+    if(e.target.closest('.pmore')){payeesOpen=!payeesOpen;renderInsightsExtra();return}
     const row=e.target.closest('.prow');if(!row||!row.dataset.note)return;
     window._cdQ={mode:'payee',p:row.dataset.note};
     showChartDetail(state.tx.filter(t=>payeeLabel_(t)===row.dataset.note&&mKey(t.date)===state.ui.month&&t.type==='expense').sort(cdSort),monthLabel(state.ui.month)+' \u00b7 '+row.dataset.note);
@@ -1278,12 +1285,10 @@ function drawDonut(){
   window._donut.slices=slices;
   centerFull();
   const lg=$('donutLegend');lg.innerHTML='';
-  rows.slice(0,6).forEach(([cat,v])=>{
-    const r=document.createElement('div');r.className='row';r.dataset.cat=cat;r.style.cursor='pointer';
-    r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${catMeta(cat).c}"></span><span class="nm">${catMeta(cat).i} ${catMeta(cat).l}</span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;
-    lg.appendChild(r);
-  });
-  if(rows.length>6){const r=document.createElement('div');r.className='row';r.innerHTML=`<span class="nm" style="padding-left:18px">+${rows.length-6} more categories</span><span class="amt">${fmtk(rows.slice(6).reduce((s,x)=>s+x[1],0))}</span><span class="pc"></span>`;lg.appendChild(r)}
+  const addLegRow=(cat,v)=>{const r=document.createElement('div');r.className='row';r.dataset.cat=cat;r.style.cursor='pointer';r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${catMeta(cat).c}"></span><span class="nm">${catMeta(cat).i} ${catMeta(cat).l}</span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;lg.appendChild(r)};
+  const shownN=donutMoreOpen?rows.length:5;
+  rows.slice(0,shownN).forEach(([cat,v])=>addLegRow(cat,v));
+  if(rows.length>5){const rest=rows.slice(5);const r=document.createElement('div');r.className='row more';r.style.cursor='pointer';r.innerHTML=`<span class="nm" style="padding-left:18px;color:#7dd3fc">${donutMoreOpen?'Show fewer categories':'+'+rest.length+' more categories'}</span><span class="amt">${donutMoreOpen?'':fmtk(rest.reduce((s,x)=>s+x[1],0))}</span><span class="pc"></span>`;lg.appendChild(r)}
 }
 function center(v,l){$('donutCenter').innerHTML=`<div class="big">${fmtk(v)}</div><div class="sm">${l}</div>`}
 
@@ -1650,6 +1655,7 @@ function init(){
     }
   });
   $('donutLegend').addEventListener('click',e=>{
+    if(e.target.closest('.more')){donutMoreOpen=!donutMoreOpen;drawDonut();return}
     const row=e.target.closest('.row');if(!row||!row.dataset.cat)return;
     window._cdQ={mode:'cat',cat:row.dataset.cat};
     showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===row.dataset.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+catMeta(row.dataset.cat).l);

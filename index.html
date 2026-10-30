@@ -591,7 +591,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
       <div class="card">
         <div class="donut-wrap"><canvas id="donutChart"></canvas><div id="donutCenter"></div></div>
         <div class="dlegend" id="donutLegend"></div>
-        <div class="sm" style="color:#5c6479;padding:10px 4px 0">Tap a slice or a legend row to open its transactions</div>
+        <div class="sm" id="donutHint" style="color:#5c6479;padding:10px 4px 0">Tap a slice or a legend row to open its transactions</div>
       </div>
     </section>
     <section class="card chart-detail" id="chartDetail" style="display:none">
@@ -610,7 +610,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <div class="card">
           <div class="cd-title" style="margin-bottom:12px">Top payees this month</div>
           <div id="topPayees"></div>
-          <div class="sm" style="color:#5c6479;margin-top:10px">Bank alerts without a merchant name group as "Unnamed bank alerts". Tap any row for its transactions.</div>
+          <div class="sm" style="color:#5c6479;margin-top:10px">Bank alerts without a merchant name group as "Unnamed bank alerts".</div>
         </div>
       </section>
       <section class="card">
@@ -1164,13 +1164,13 @@ function renderInsightsExtra(){
   })}
   const grp={};exp.forEach(t=>{const k=payeeLabel_(t);if(!grp[k])grp[k]={v:0,n:0};grp[k].v+=t.amount;grp[k].n++});
   const topAll=Object.entries(grp).sort((a,b)=>b[1].v-a[1].v);
-  const top=payeesOpen?topAll:topAll.slice(0,4);
+  const top=payeesOpen?topAll:topAll.slice(0,3);
   const tHtml=top.length?top.map(pair=>{
     const k=pair[0],g=pair[1],pct=Math.round(g.v/tot*100);
     return '<div class="prow" data-note="'+k.replace(/"/g,'&quot;')+'"><div class="pl"><div class="pn">'+k+'</div><div class="ps">'+g.n+' payment'+(g.n===1?'':'s')+' \u00b7 '+pct+'% of spend</div></div><div class="pv">'+fmtk(g.v)+'</div><div class="pbar"><div style="width:'+pct+'%"></div></div></div>';
   }).join(''):'<div class="empty" style="padding:10px">No expenses yet</div>';
   let tHtml2=tHtml;
-  if(topAll.length>4)tHtml2+='<div class="pmore">'+(payeesOpen?'Show fewer payees \u25b4':'+ '+(topAll.length-4)+' more payees \u25be')+'</div>';
+  if(topAll.length>3)tHtml2+='<div class="pmore">'+(payeesOpen?'Show fewer payees \u25b4':'+ '+(topAll.length-3)+' more payees \u25be')+'</div>';
   $('topPayees').innerHTML=tHtml2;
   const tp=$('topPayees');
   if(!tp._w){tp._w=1;tp.addEventListener('click',e=>{
@@ -1286,9 +1286,10 @@ function drawDonut(){
   centerFull();
   const lg=$('donutLegend');lg.innerHTML='';
   const addLegRow=(cat,v)=>{const r=document.createElement('div');r.className='row';r.dataset.cat=cat;r.style.cursor='pointer';r.innerHTML=`<span style="width:9px;height:9px;border-radius:3px;background:${catMeta(cat).c}"></span><span class="nm">${catMeta(cat).i} ${catMeta(cat).l}</span><span class="amt">${fmtk(v)}</span><span class="pc">${Math.round(v/total*100)}%</span>`;lg.appendChild(r)};
-  const shownN=donutMoreOpen?rows.length:5;
+  const shownN=donutMoreOpen?rows.length:3;
   rows.slice(0,shownN).forEach(([cat,v])=>addLegRow(cat,v));
-  if(rows.length>5){const rest=rows.slice(5);const r=document.createElement('div');r.className='row more';r.style.cursor='pointer';r.innerHTML=`<span class="nm" style="padding-left:18px;color:#7dd3fc">${donutMoreOpen?'Show fewer categories':'+'+rest.length+' more categories'}</span><span class="amt">${donutMoreOpen?'':fmtk(rest.reduce((s,x)=>s+x[1],0))}</span><span class="pc"></span>`;lg.appendChild(r)}
+  if(rows.length>3){const rest=rows.slice(3);const r=document.createElement('div');r.className='row more';r.style.cursor='pointer';r.innerHTML=`<span class="nm" style="padding-left:18px;color:#7dd3fc">${donutMoreOpen?'Show fewer categories':'+'+rest.length+' more categories'}</span><span class="amt">${donutMoreOpen?'':fmtk(rest.reduce((s,x)=>s+x[1],0))}</span><span class="pc"></span>`;lg.appendChild(r)}
+  const dh=$('donutHint');if(dh)dh.style.display=donutMoreOpen?'':'none';
 }
 function center(v,l){$('donutCenter').innerHTML=`<div class="big">${fmtk(v)}</div><div class="sm">${l}</div>`}
 

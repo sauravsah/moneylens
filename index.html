@@ -1041,6 +1041,10 @@ function reconcileSync_(list,quiet){
         if(!row.bank&&ex.bank)row.bank=ex.bank;
         if(!row.src&&ex.src)row.src=ex.src;
       }
+      if(row.m){row.review=false}
+      else if(row.cat==='other'||row.cat==='otherin'){
+        if(row.review===undefined||row.review===false){const ln=learnKey_(row.note);row.review=(ln&&learnHit_(ln))?false:true}
+      }
       next.push(row);
     });
     state.tx.forEach(ex=>{

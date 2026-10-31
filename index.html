@@ -930,8 +930,9 @@ function adoptCats_(){
       CATS[c]={l:label.charAt(0).toUpperCase()+label.slice(1),i:'\ud83c\udff3\ufe0f',c:CPAL[Object.keys(CATS).length%CPAL.length],t:t.type==='income'?'income':'expense'};
       state.customCats.push({slug:c,l:CATS[c].l,i:CATS[c].i,c:CATS[c].c,t:CATS[c].t,g:''});n++;
     });
-    if(n){recomputeCats();save()}
-  }catch(e){}
+    if(n)recomputeCats();
+    return n;
+  }catch(e){return 0}
 }
 /* ---------- missing-transaction reports ---------- */
 function openReportForm(){
@@ -1076,12 +1077,13 @@ function reconcileSync_(list,quiet){
       next.push(Object.assign({},ex));
       if(ex.m&&ex.id){queuePush_(ex);pushed++}
     });
-    adoptCats_();
+    const adopted=adoptCats_(next);
     const key=t=>[t.id,t.cat,t.note,t.m,t.review,t.amount,t.date,t.type,t.time,t.bank,t.src,t.ref].join('|');
     const before=state.tx.map(key).join('\n'),after=next.map(key).join('\n');
     const changed=before!==after;
-    if(!changed&&!pushed&&!dropped)return 0;
-    if(changed){state.tx=next;save();renderAll()}
+    if(!changed&&!pushed&&!dropped&&!adopted)return 0;
+    if(changed){state.tx=next}
+    if(changed||adopted){save();renderAll()}
     if(dropped&&!quiet)toast('Cleaned '+dropped+' stray row'+(dropped===1?'':'s'));
     if(pushed)flushPush_();
     return changed?1:0;

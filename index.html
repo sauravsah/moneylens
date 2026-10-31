@@ -678,7 +678,8 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <button class="chip on" data-type="all">All</button>
         <button class="chip" data-type="income">Income</button>
         <button class="chip" data-type="expense">Expense</button>
-        <button class="chip" id="fUntagged">Untagged</button>
+        <button class="chip" id="fUntagged" data-type="untagged">Untagged</button>
+        <button class="chip" data-type="tagged">Tagged</button>
         <select id="fCat"><option value="all">All categories</option></select>
         <select id="fBank"><option value="all">All banks</option></select>
         <input id="fQ" type="search" placeholder="Search notes&#8230;">
@@ -864,7 +865,7 @@ const LS='moneylens_v2';
 const SYNC_URL=(function(){try{var u=localStorage.getItem('ml_feed_url');if(u)return u;return localStorage.getItem('ml_manual')?'':''}catch(e){return ''}})();
 const SYNC_BATCH='demo-batch';
 const SYNC=[{"id":"demo-000","type":"income","amount":61530,"cat":"salary","date":"2026-09-01","note":"monthly salary"},{"id":"demo-001","type":"expense","amount":18420,"cat":"rent","date":"2026-09-03","note":"room rent"},{"id":"demo-002","type":"expense","amount":3265,"cat":"bills","date":"2026-09-05","note":"electricity + wifi"},{"id":"demo-003","type":"expense","amount":6250,"cat":"invest","date":"2026-09-07","note":"mutual fund SIP"},{"id":"demo-004","type":"expense","amount":1502,"cat":"bills","date":"2026-09-29","note":"utility"},{"id":"demo-005","type":"expense","amount":1600,"cat":"fun","date":"2026-09-05","note":"bowling"},{"id":"demo-006","type":"expense","amount":193,"cat":"food","date":"2026-09-19","note":"coffee run"},{"id":"demo-007","type":"expense","amount":1428,"cat":"bills","date":"2026-09-19","note":"utility"},{"id":"demo-008","type":"expense","amount":263,"cat":"food","date":"2026-09-14","note":"groceries"},{"id":"demo-009","type":"expense","amount":1082,"cat":"food","date":"2026-09-22","note":"swiggy order"},{"id":"demo-010","type":"expense","amount":959,"cat":"food","date":"2026-09-12","note":"groceries"},{"id":"demo-011","type":"expense","amount":730,"cat":"subscriptions","date":"2026-09-01","note":"subscription"},{"id":"demo-012","type":"expense","amount":220,"cat":"fun","date":"2026-09-17","note":"gaming"},{"id":"demo-013","type":"expense","amount":1369,"cat":"food","date":"2026-09-24","note":"dinner out"},{"id":"demo-014","type":"expense","amount":2101,"cat":"health","date":"2026-09-15","note":"pharmacy"},{"id":"demo-015","type":"expense","amount":3378,"cat":"shopping","date":"2026-09-07","note":"household"},{"id":"demo-016","type":"expense","amount":199,"cat":"food","date":"2026-09-15","note":"swiggy order"},{"id":"demo-017","type":"expense","amount":734,"cat":"bills","date":"2026-09-29","note":"utility"},{"id":"demo-018","type":"expense","amount":1071,"cat":"shopping","date":"2026-09-22","note":"myntra"},{"id":"demo-019","type":"expense","amount":499,"cat":"subscriptions","date":"2026-09-05","note":"subscription"},{"id":"demo-020","type":"expense","amount":334,"cat":"fun","date":"2026-10-14","note":"movie night"},{"id":"demo-021","type":"expense","amount":1473,"cat":"bills","date":"2026-09-01","note":"utility"},{"id":"demo-022","type":"expense","amount":284,"cat":"food","date":"2026-10-24","note":"coffee run"},{"id":"demo-023","type":"expense","amount":199,"cat":"subscriptions","date":"2026-09-08","note":"subscription"},{"id":"demo-024","type":"expense","amount":1053,"cat":"bills","date":"2026-10-13","note":"utility"},{"id":"demo-025","type":"expense","amount":813,"cat":"bills","date":"2026-09-15","note":"utility"},{"id":"demo-026","type":"expense","amount":1556,"cat":"health","date":"2026-10-01","note":"pharmacy"},{"id":"demo-027","type":"expense","amount":963,"cat":"fun","date":"2026-10-24","note":"movie night"},{"id":"demo-028","type":"expense","amount":689,"cat":"food","date":"2026-09-30","note":"zomato"},{"id":"demo-029","type":"expense","amount":3748,"cat":"shopping","date":"2026-10-05","note":"amazon order"},{"id":"demo-030","type":"expense","amount":2066,"cat":"health","date":"2026-09-18","note":"pharmacy"},{"id":"demo-031","type":"expense","amount":772,"cat":"health","date":"2026-09-29","note":"pharmacy"},{"id":"demo-032","type":"expense","amount":1464,"cat":"bills","date":"2026-10-17","note":"utility"},{"id":"demo-033","type":"expense","amount":556,"cat":"food","date":"2026-09-06","note":"swiggy order"},{"id":"demo-034","type":"expense","amount":1022,"cat":"food","date":"2026-10-05","note":"groceries"},{"id":"demo-035","type":"expense","amount":2242,"cat":"health","date":"2026-10-04","note":"pharmacy"},{"id":"demo-036","type":"expense","amount":499,"cat":"subscriptions","date":"2026-10-25","note":"subscription"},{"id":"demo-037","type":"expense","amount":313,"cat":"transport","date":"2026-10-05","note":"auto"},{"id":"demo-038","type":"expense","amount":1176,"cat":"food","date":"2026-10-22","note":"dinner out"},{"id":"demo-039","type":"expense","amount":785,"cat":"other","date":"2026-09-27","note":"misc"},{"id":"demo-040","type":"expense","amount":652,"cat":"food","date":"2026-09-23","note":"groceries"},{"id":"demo-041","type":"expense","amount":779,"cat":"shopping","date":"2026-10-11","note":"amazon order"},{"id":"demo-042","type":"expense","amount":1382,"cat":"other","date":"2026-10-18","note":"misc"},{"id":"demo-043","type":"expense","amount":917,"cat":"health","date":"2026-09-06","note":"pharmacy"},{"id":"demo-044","type":"expense","amount":1043,"cat":"fun","date":"2026-09-13","note":"movie night"},{"id":"demo-045","type":"expense","amount":1526,"cat":"health","date":"2026-09-03","note":"pharmacy"},{"id":"demo-046","type":"expense","amount":299,"cat":"subscriptions","date":"2026-09-19","note":"subscription"},{"id":"demo-047","type":"expense","amount":1307,"cat":"food","date":"2026-09-23","note":"coffee run"},{"id":"demo-048","type":"expense","amount":500,"cat":"other","date":"2026-09-13","note":"misc"},{"id":"demo-049","type":"expense","amount":307,"cat":"transport","date":"2026-09-18","note":"metro card"},{"id":"demo-050","type":"expense","amount":447,"cat":"food","date":"2026-10-17","note":"coffee run"},{"id":"demo-051","type":"expense","amount":453,"cat":"transport","date":"2026-10-13","note":"auto"},{"id":"demo-052","type":"expense","amount":1011,"cat":"fun","date":"2026-09-08","note":"bowling"},{"id":"demo-053","type":"expense","amount":1603,"cat":"other","date":"2026-10-12","note":"misc"},{"id":"demo-054","type":"expense","amount":788,"cat":"other","date":"2026-09-05","note":"misc"},{"id":"demo-055","type":"expense","amount":730,"cat":"subscriptions","date":"2026-10-02","note":"subscription"},{"id":"demo-056","type":"income","amount":12430,"cat":"freelance","date":"2026-09-27","note":"design gig"},{"id":"demo-057","type":"income","amount":8875,"cat":"freelance","date":"2026-09-19","note":"web project"}];
-let state={tx:[],budgets:{food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290},customCats:[],settings:{salaryDay:0},recIgnore:[],reports:[],learn:{},ui:{month:null,type:'all',cat:'all',bank:'all',q:'',untagged:false}};
+let state={tx:[],budgets:{food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290},customCats:[],settings:{salaryDay:0},recIgnore:[],reports:[],learn:{},ui:{month:null,type:'all',cat:'all',bank:'all',q:'',untagged:false,tagged:false,filter:'all'}};
 let editingId=null;
 
 const $=id=>document.getElementById(id);
@@ -1102,7 +1103,7 @@ function notifyNew(list){
     if(fresh.length>3){new Notification(fresh.length+' new transactions need tags',{body:'Open MoneyLens to tag them',tag:'mlbatch'});return}
     fresh.forEach(t=>{
       const n=new Notification((t.note||'New transaction')+' \u00b7 '+(t.type==='income'?'+':'\u2212')+fmt(t.amount),{body:'Just synced from your alerts. Tap to tag it.',tag:'ml'+t.id});
-      n.onclick=()=>{try{window.focus()}catch(e){}show('app');state.ui.untagged=true;const fu=$('fUntagged');if(fu)fu.classList.add('on');renderList();const el=$('txList');if(el)el.scrollIntoView({behavior:'smooth'});n.close()};
+      n.onclick=()=>{try{window.focus()}catch(e){}show('app');state.ui.filter='untagged';state.ui.type='all';state.ui.untagged=true;syncFilterChips();renderList();const el=$('txList');if(el)el.scrollIntoView({behavior:'smooth'});n.close()};
     });
   }catch(e){}
 }
@@ -1463,12 +1464,15 @@ function renderBudgets(){
 function filtered(){
   const q=state.ui.q.toLowerCase();
   return state.tx.filter(t=>mKey(t.date)===state.ui.month)
-    .filter(t=>state.ui.type==='all'||t.type===state.ui.type)
-    .filter(t=>!state.ui.untagged||t.review)
+    .filter(t=>state.ui.filter==='all'||(state.ui.filter==='income'?t.type==='income':state.ui.filter==='expense'?t.type==='expense':state.ui.filter==='untagged'?!!t.review:state.ui.filter==='tagged'?!t.review:true))
     .filter(t=>state.ui.cat==='all'||t.cat===state.ui.cat)
     .filter(t=>state.ui.bank==='all'||t.bank===state.ui.bank)
     .filter(t=>!q||(t.note||'').toLowerCase().includes(q)||(CATS[t.cat]||{l:''}).l.toLowerCase().includes(q))
     .sort((a,b)=>b.date.localeCompare(a.date));
+}
+function syncFilterChips(f){
+  if(!f)f=state.ui.filter||'all';
+  document.querySelectorAll('.filters .chip[data-type]').forEach(x=>x.classList.toggle('on',x.dataset.type===f));
 }
 function renderList(){
   const list=filtered(),wrap=$('txList');wrap.innerHTML='';
@@ -1573,6 +1577,8 @@ function settingsPopInit(){
 function init(){
   load();
   try{if(new URLSearchParams(location.search).get('qa')==='tag'){state.tx.push({id:'qa1',type:'expense',amount:240,cat:'other',date:todayStr(),note:'Test merchant pay',src:'sms',review:true});}}catch(e){}
+  try{if(state.tx.some(x=>x.review))state.ui.filter='untagged'}catch(e){}
+  syncFilterChips();
   dedupeLocal();
   smartRetag_();
   normalizeCats_();
@@ -1671,7 +1677,7 @@ function init(){
   });
   $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&$('overlay').classList.contains('show'))saveTx()});
-  $('fUntagged').onclick=()=>{state.ui.untagged=!state.ui.untagged;$('fUntagged').classList.toggle('on',state.ui.untagged);renderList()};
+  
   $('txList').addEventListener('click',e=>{
     const q=e.target.closest('.qtag');if(!q)return;
     const row=e.target.closest('.tx');if(!row)return;
@@ -1736,8 +1742,13 @@ function init(){
   });
   document.querySelectorAll('#segType button').forEach(b=>b.onclick=()=>{setSeg(b.dataset.t);fillCatSelect(b.dataset.t)});
   document.querySelectorAll('.chip[data-type]').forEach(ch=>ch.onclick=()=>{
-    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');
-    state.ui.type=ch.dataset.type;renderList();
+    const f=ch.dataset.type;
+    state.ui.filter=f;
+    state.ui.type=(f==='income'||f==='expense')?f:'all';
+    state.ui.untagged=(f==='untagged');
+    state.ui.tagged=(f==='tagged');
+    syncFilterChips();
+    renderList();
   });
   fc.onchange=()=>{state.ui.cat=fc.value;renderList()};
   $('fQ').oninput=()=>{state.ui.q=$('fQ').value;renderList()};

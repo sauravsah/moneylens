@@ -181,6 +181,7 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 .qin:focus{border-color:var(--acc1);box-shadow:0 0 0 3px rgba(139,124,255,.18)}.qtag .qsel{appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--line);border-radius:99px;color:var(--mut);padding:5px 24px 5px 11px;font-size:11.5px;font-weight:600;font-family:inherit;cursor:pointer;outline:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 13px) 50%,calc(100% - 9px) 50%;background-size:4px 4px;background-repeat:no-repeat}.qtag .qsel:focus{border-color:var(--acc1)}.qtag .qsel option{background:#141428;color:#e8e8f4;font-size:13px}
 @media(max-width:560px){
   .tx{padding:10px 11px;gap:10px}
+  .uroChip{padding:6px 13px;font-size:12px}
   .qtag{gap:8px;margin-top:9px;padding-top:9px}
   .qtag .chip{padding:9px 13px;font-size:12.5px}
   .qtag button[data-cat]:nth-of-type(n+9){display:none}
@@ -220,7 +221,7 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 #toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,90px);background:rgba(18,23,40,.92);backdrop-filter:blur(12px);border:1px solid var(--line2);color:var(--txt);padding:13px 22px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:200;transition:.4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 14px 50px rgba(0,0,0,.55);pointer-events:none;display:flex;align-items:center;gap:9px;opacity:0}
 #toast::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px rgba(139,124,255,.8)}
 #toast.show{transform:translate(-50%,0);opacity:1}
-.tundo{background:none;border:0;color:#8b7cff;font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;padding:2px 4px;pointer-events:auto;flex-shrink:0}
+.tundo{background:none;border:1px solid rgba(139,124,255,.55);border-radius:99px;color:#a99bff;font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:4px 13px;pointer-events:auto;flex-shrink:0}.uroChip{background:none;border:1px solid rgba(139,124,255,.5);border-radius:99px;color:#8b7cff;font:inherit;font-size:10.5px;font-weight:700;cursor:pointer;padding:3px 11px;margin-left:8px;vertical-align:middle;flex-shrink:0}
 .fab{display:none;position:fixed;bottom:calc(26px + env(safe-area-inset-bottom));right:22px;z-index:60;width:60px;height:60px;border-radius:50%;border:0;background:var(--grad);color:#fff;font-size:27px;cursor:pointer;box-shadow:0 12px 38px rgba(139,124,255,.55);transition:.25s}
 .fab:hover{transform:translateY(-3px)}
 .fab:active{transform:scale(.9)}
@@ -1493,13 +1494,15 @@ function renderList(){
   list.forEach((t,i)=>{
     const c=CATS[t.cat]||{l:(t.cat||'Other'),i:'\u2753',c:'#94a3b8'};
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
+    const urow=undoSnap&&undoSnap.prev&&undoSnap.prev.id===t.id;
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
-      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}</div></div>
+      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}${urow?' <button class="uroChip" data-uro="1" title="Revert this tag">\u21a9 Undo</button>':''}</div></div>
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
       if(isPending_(t)){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
     d.addEventListener('click',e=>{
       if(e.target.closest('.qtag'))return;
+      if(e.target.closest('.uroChip')){const u=undoSnap;undoSnap=null;if(u)doUndo_(u);return;}
       openModal(t);
     });
     wrap.appendChild(d);
@@ -1544,7 +1547,7 @@ function delTx(){if(!editingId)return;queueDel_(editingId);state.tx=state.tx.fil
 /* ---------- toast / tooltip ---------- */
 let toastT;
 let undoSnap=null;
-function toast(msg,undo){const t=$('toast');t.innerHTML='';const s=document.createElement('span');s.textContent=msg;t.appendChild(s);undoSnap=undo||null;if(undoSnap){const b=document.createElement('button');b.className='tundo';b.textContent='Undo';b.onclick=()=>{const u=undoSnap;undoSnap=null;t.classList.remove('show');doUndo_(u)};clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),6000)}else{clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900)}}
+function toast(msg,undo){const t=$('toast');t.innerHTML='';const s=document.createElement('span');s.textContent=msg;t.appendChild(s);undoSnap=undo||null;if(undoSnap){const b=document.createElement('button');b.className='tundo';b.textContent='Undo';b.onclick=()=>{const u=undoSnap;undoSnap=null;t.classList.remove('show');doUndo_(u)};clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),10000)}else{clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900)}}
 function doUndo_(u){if(!u||!u.prev)return;const t=state.tx.find(x=>x.id===u.prev.id);if(!t)return;t.cat=u.prev.cat;t.note=u.prev.note;t.m=u.prev.m;t.review=u.prev.rev;if(u.learnedNew&&u.note){const lk=learnKey_(u.note);if(lk&&state.learn&&state.learn[lk])delete state.learn[lk]}queuePush_(t);save();renderAll();toast('Reverted')}
 const tip=$('tip');
 function showTip(x,y,text){tip.textContent=text;tip.style.opacity=1;tip.style.left=Math.min(x+14,innerWidth-160)+'px';tip.style.top=(y-38)+'px'}

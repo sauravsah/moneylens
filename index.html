@@ -999,6 +999,32 @@ function mergeTxns(incoming,quiet,markReview){
   else if(!quiet) toast('Nothing new to sync');
   return added+upd;
 }
+function timeClose_(a,b){if(!a||!b)return true;const p=s=>{const m=String(s).match(/^(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):null};const x=p(a),y=p(b);if(x==null||y==null)return true;return Math.abs(x-y)<=20}
+function dedupeSync_(list){
+  try{
+    if(!Array.isArray(list)||!list.length)return;
+    const feed={};list.forEach(t=>{if(t&&t.id)feed[t.id]=t});
+    const drop=new Set();
+    const byId={};state.tx.forEach((t,i)=>{if(t&&t.id)(byId[t.id]=byId[t.id]||[]).push(i)});
+    Object.keys(byId).forEach(id=>{
+      const idxs=byId[id];if(idxs.length<2||!feed[id])return;
+      idxs.sort((a,b)=>{const A=state.tx[a],B=state.tx[b];const an=A.note===feed[id].note,bn=B.note===feed[id].note;if(an!==bn)return an?-1:1;return(b.m?1:0)-(A.m?1:0)});
+      const K=state.tx[idxs[0]];
+      idxs.slice(1).forEach(i=>{const D=state.tx[i];if(D.m&&!K.m){K.cat=D.cat||K.cat;if(D.note&&!genericNote_(D.note))K.note=D.note;K.m=true;K.review=false;queuePush_(K)}drop.add(i)});
+    });
+    state.tx.forEach((t,i)=>{
+      if(drop.has(i)||!t||!t.src||(t.src!=='email'&&t.src!=='sms'))return;
+      if(t.id&&feed[t.id])return;
+      const F=list.find(x=>x&&x.id&&x.amount>0&&x.date===t.date&&x.type===t.type&&Math.abs((x.amount||0)-t.amount)<0.005&&(!x.bank||!t.bank||x.bank===t.bank)&&(!x.ref||!t.ref||x.ref===t.ref)&&timeClose_(x.time,t.time));
+      if(!F)return;
+      if(t.m){const ex=state.tx.find(y=>y.id===F.id);if(ex&&!ex.m){ex.cat=t.cat||ex.cat;if(t.note&&!genericNote_(t.note))ex.note=t.note;ex.m=true;ex.review=false;queuePush_(ex)}}
+      drop.add(i);
+    });
+    if(!drop.size)return;
+    state.tx=state.tx.filter((t,i)=>!drop.has(i));
+    save();renderAll();toast('Cleaned '+drop.size+' duplicate row'+(drop.size===1?'':'s'));
+  }catch(e){}
+}
 function notifyNew(list){
   const fresh=(list||[]).filter(t=>t&&t.review);
   if(!fresh.length||!('Notification' in window)||Notification.permission!=='granted')return;
@@ -1639,7 +1665,7 @@ function init(){
     fetch(SYNC_URL+'?t='+Date.now()).then(r=>r.json()).then(j=>{
       const list=Array.isArray(j)?j:(j.transactions||[]);
       const known=new Set(state.tx.map(t=>t.id));
-      if(mergeTxns(list,true,true)){save();notifyNew(list.filter(t=>t&&t.id&&!known.has(t.id)))}
+      if(mergeTxns(list,true,true)){save();notifyNew(list.filter(t=>t&&t.id&&!known.has(t.id)))}dedupeSync_(list);
       purgeDemo_();
       if(Array.isArray(j.reports)){const nr=j.reports.filter(r=>r&&r.text);const prev=JSON.stringify(state.reports||[]);state.reports=nr.slice(-20).reverse();if(JSON.stringify(state.reports)!==prev){save();renderReports()}}
     }).catch(()=>{});

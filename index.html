@@ -844,7 +844,7 @@ function saveQuickTag(id,cat,note){
   const fn=note||t.note,ln=learnKey_(fn),learned0=ln?!!learnHit_(ln):false;
   const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true};
   if(cat)t.cat=cat;if(note)t.note=note.slice(0,60);
-  t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(fn,cat);save();renderAll();
+  t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(fn,cat);undoSnap={prev:prev,note:fn,learnedNew:!!cat&&!learned0};save();renderAll();
   toast('Tagged · '+catMeta(t.cat).l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''),{prev:prev,note:fn,learnedNew:!!cat&&!learned0});
 }
 function qtagHtml(t){

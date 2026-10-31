@@ -182,6 +182,11 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 @media(max-width:560px){
   .tx{padding:10px 11px;gap:10px}
   .uroChip{padding:6px 13px;font-size:12px}
+.spb{color:#fbbf24;font-size:11px;font-weight:600;white-space:nowrap}
+.stl{padding:3px 10px;font-size:11px;flex:none}
+.qsplit,.qsettle{flex-basis:100%;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--txt)}
+.qsin{background:var(--surface);border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:7px 9px;font-size:12.5px;font-family:inherit;width:80px;min-width:70px;outline:none}
+.qsin:focus{border-color:var(--acc1)}
   .qtag{gap:8px;margin-top:9px;padding-top:9px}
   .qtag .chip{padding:9px 13px;font-size:12.5px}
   .qtag button[data-cat]:nth-of-type(n+9){display:none}
@@ -681,6 +686,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <button class="chip" data-type="expense">Expense</button>
         <button class="chip" id="fUntagged" data-type="untagged">Untagged</button>
         <button class="chip" data-type="tagged">Tagged</button>
+        <button class="chip" data-type="split">Split</button>
         <select id="fCat"><option value="all">All categories</option></select>
         <select id="fBank"><option value="all">All banks</option></select>
         <input id="fQ" type="search" placeholder="Search notes&#8230;">
@@ -768,6 +774,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
     <div class="field"><label>Amount (&#8377;)</label><input id="mAmt" type="number" min="0" step="1" placeholder="0" inputmode="decimal"></div>
     <div class="field"><label>Category</label><select id="mCat"></select></div>
     <div class="field"><label>Date</label><input id="mDate" type="date"></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:7px"><input id="mSplit" type="checkbox">\ud83d\udc65 Split bill</label><span id="mSplitBox" style="display:none;align-items:center;gap:5px;font-size:13px">total \u20b9<input id="mSTot" type="number" min="1" inputmode="decimal" style="max-width:88px"> \u00b7 my share \u20b9<input id="mSShare" type="number" min="1" inputmode="decimal" style="max-width:88px"></span></div>
     <div class="field"><label>Note</label><input id="mNote" type="text" placeholder="e.g. groceries at BigBasket" maxlength="80"></div>
     <div class="acts">
       <button class="danger" id="mDel" style="display:none">Delete</button>
@@ -842,7 +849,7 @@ function matchCatLabel(text){
 function saveQuickTag(id,cat,note){
   const t=state.tx.find(x=>x.id===id);if(!t)return;
   const fn=note||t.note,ln=learnKey_(fn),learned0=ln?!!learnHit_(ln):false;
-  const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true};
+  const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true,amount:t.amount,split:t.split};
   if(cat)t.cat=cat;if(note)t.note=note.slice(0,60);
   t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(fn,cat);undoSnap={prev:prev,note:fn,learnedNew:!!cat&&!learned0};save();renderAll();
   toast('Tagged · '+catMeta(t.cat).l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''),{prev:prev,note:fn,learnedNew:!!cat&&!learned0});
@@ -858,7 +865,9 @@ function qtagHtml(t){
   h+='</select>';
   h+='<input class="qin" type="text" placeholder="Type what it was spent on…">';
   h+='<button class="chip" data-act="qsave">Save</button>';
-  h+='<button class="chip" data-act="qnew" style="display:none">Create</button></div>';
+  h+='<button class="chip" data-act="qnew" style="display:none">Create</button>';
+  if(t.type==='expense')h+='<button class="chip" data-act="qsplit">\ud83d\udc65 Split bill</button><div class="qsplit" style="display:none">total \u20b9<input class="qsin qst" type="number" min="1" inputmode="decimal"> \u00b7 my share \u20b9<input class="qsin qsm" type="number" min="1" inputmode="decimal"><button class="chip" data-act="qssave">Save split</button><button class="chip" data-act="qscancel">Cancel</button></div>';
+  h+='</div>';
   return h;
 }
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1136,7 +1145,7 @@ function load(){
 function save(){try{localStorage.setItem(LS,JSON.stringify({tx:state.tx,budgets:state.budgets,customCats:state.customCats,settings:state.settings,recIgnore:state.recIgnore,reports:state.reports||[],learn:state.learn||{}}))}catch(e){}}
 /* ---------- two-way sync: push local changes up to the feed ---------- */
 const PUSHQ='ml_pushq';
-function queuePush_(t){try{if(!t||!t.id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const row={id:t.id,date:t.date,amount:t.amount,type:t.type,note:t.note,cat:t.cat,m:!!t.m,review:!!t.review,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||''};const ix=q.findIndex(x=>!x.del&&x.id===row.id);if(ix>=0)q[ix]=row;else q.push(row);localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
+function queuePush_(t){try{if(!t||!t.id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const row={id:t.id,date:t.date,amount:t.amount,type:t.type,note:t.note,cat:t.cat,m:!!t.m,review:!!t.review,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||'',split:t.split||null};const ix=q.findIndex(x=>!x.del&&x.id===row.id);if(ix>=0)q[ix]=row;else q.push(row);localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
 function queueDel_(id){try{if(!id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');q.push({del:id});localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
 function flushPush_(){try{if(!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');if(!q.length)return;const tags=q.filter(x=>!x.del).slice(0,50);const dels=q.filter(x=>x.del).slice(0,50);if(!tags.length&&!dels.length)return;const clear=()=>{try{const q2=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const keep=q2.filter(x=>{if(x.del)return!dels.some(d=>d.del===x.del);return!tags.some(t=>t.id===x.id)});localStorage.setItem(PUSHQ,JSON.stringify(keep))}catch(e){}};const sendDels=()=>{if(!dels.length)return;fetch(SYNC_URL,{method:'POST',body:JSON.stringify({push:'del',ids:dels.map(d=>d.del)})}).then(r=>r.json()).then(j=>{if(j&&j.ok)clear()}).catch(()=>{})};if(tags.length)fetch(SYNC_URL,{method:'POST',body:JSON.stringify({push:'txns',txns:tags})}).then(r=>r.json()).then(j=>{if(j&&j.ok){clear();sendDels()}}).catch(()=>{});else sendDels()}catch(e){}}
 
@@ -1476,7 +1485,7 @@ function isPending_(t){
 function filtered(){
   const q=state.ui.q.toLowerCase();
   return state.tx.filter(t=>mKey(t.date)===state.ui.month)
-    .filter(t=>state.ui.filter==='all'||(state.ui.filter==='income'?t.type==='income':state.ui.filter==='expense'?t.type==='expense':state.ui.filter==='untagged'?isPending_(t):state.ui.filter==='tagged'?!isPending_(t):true))
+    .filter(t=>state.ui.filter==='all'||(state.ui.filter==='income'?t.type==='income':state.ui.filter==='expense'?t.type==='expense':state.ui.filter==='untagged'?isPending_(t):state.ui.filter==='tagged'?!isPending_(t):state.ui.filter==='split'?!!t.split:true))
     .filter(t=>state.ui.cat==='all'||t.cat===state.ui.cat)
     .filter(t=>state.ui.bank==='all'||t.bank===state.ui.bank)
     .filter(t=>!q||(t.note||'').toLowerCase().includes(q)||(CATS[t.cat]||{l:''}).l.toLowerCase().includes(q))
@@ -1498,13 +1507,16 @@ function renderList(){
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
     const urow=undoSnap&&undoSnap.prev&&undoSnap.prev.id===t.id;
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
-      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}${urow?' <button class="uroChip" data-uro="1" title="Revert this tag">\u21a9 Undo</button>':''}</div></div>
+      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}${t.split?' <span class="spb">\ud83d\udc65 '+fmt(t.split.mine)+' of \u20b9'+fmt(t.split.total)+'</span>':''}${urow?' <button class="uroChip" data-uro="1" title="Revert this tag">\u21a9 Undo</button>':''}${t.split?' <button class="chip stl" data-act="settle">\u2713 Settle</button>':''}</div></div>
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
       if(isPending_(t)){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
     d.addEventListener('click',e=>{
-      if(e.target.closest('.qtag'))return;
       if(e.target.closest('.uroChip')){const u=undoSnap;undoSnap=null;if(u)doUndo_(u);return;}
+      const sb=e.target.closest('[data-act="stsave"],[data-act="stcancel"]');
+      if(sb){const f=d.querySelector('.qsettle');if(!f)return;if(sb.dataset.act==='stcancel')f.remove();else doSettle_(t,f);return}
+      if(e.target.closest('.stl')){const ex=d.querySelector('.qsettle');if(ex)ex.remove();else d.appendChild(settleHtml_(t));return}
+      if(e.target.closest('.qtag'))return;
       openModal(t);
     });
     wrap.appendChild(d);
@@ -1527,6 +1539,8 @@ function openModal(t){
   $('mAmt').value=t?t.amount:'';
   $('mDate').value=t?t.date:(state.ui.month===mKey(todayStr())?todayStr():state.ui.month+'-01');
   $('mNote').value=t?t.note:'';
+  $('mSplit').checked=!!(t&&t.split);$('mSplitBox').style.display=$('mSplit').checked?'inline-flex':'none';
+  $('mSTot').value=t?(t.split?t.split.total:t.amount):'';$('mSShare').value=t&&t.split?t.split.mine:'';
   $('overlay').classList.add('show');
   setTimeout(()=>$('mAmt').focus(),80);
 }
@@ -1538,7 +1552,7 @@ function saveTx(){
   if(!$('mDate').value){toast('Pick a date');return}
   const type=document.querySelector('#segType button.on').dataset.t;
   const data={type,amount:amt,cat:$('mCat').value,date:$('mDate').value,note:$('mNote').value.trim()};
-  if(editingId){const t=state.tx.find(x=>x.id===editingId);const fn=data.note||t.note,ln=learnKey_(fn),learned0=ln?!!learnHit_(ln):false;const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true};Object.assign(t,data);t.review=false;t.m=true;queuePush_(t);if(data.cat)learnTag_(fn,data.cat);toast('Updated',{prev:prev,note:fn,learnedNew:!!data.cat&&!learned0})}
+  if(editingId){const t=state.tx.find(x=>x.id===editingId);const fn=data.note||t.note,ln=learnKey_(fn),learned0=ln?!!learnHit_(ln):false;const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true,amount:t.amount,split:t.split};let sp=null;if($('mSplit').checked){const st=+$('mSTot').value,sm=+$('mSShare').value;if(!(st>0&&sm>0&&sm<=st)){toast('Enter a valid split: my share can\u2019t exceed the total');return}sp={total:st,mine:sm}}Object.assign(t,data);t.review=false;t.m=true;if(sp){t.split=sp;t.amount=sp.mine}else if(t.split){t.amount=t.split.total;t.split=null}queuePush_(t);if(data.cat)learnTag_(fn,data.cat);toast('Updated',{prev:prev,note:fn,learnedNew:!!data.cat&&!learned0})}
   else{const nt={id:uid(),...data};state.tx.push(nt);queuePush_(nt);toast(type==='income'?'Income added 🎉':'Expense added')}
   save();
   state.ui.month=mKey(data.date);
@@ -1546,11 +1560,33 @@ function saveTx(){
 }
 function delTx(){if(!editingId)return;queueDel_(editingId);state.tx=state.tx.filter(t=>t.id!==editingId);save();closeModal();renderAll();toast('Deleted')}
 
+/* ---------- split ---------- */
+function saveSplit_(t,row){
+  const f=row.querySelector('.qsplit');if(!f)return;
+  const tot=+f.querySelector('.qst').value,me=+f.querySelector('.qsm').value;
+  if(!(tot>0)||!(me>0)||me>tot){toast('Enter a valid split: my share can\u2019t exceed the total');return}
+  const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true,amount:t.amount,split:t.split};
+  t.split={total:tot,mine:me};t.amount=me;t.review=false;t.m=true;queuePush_(t);save();
+  undoSnap={prev:prev,note:t.note,learnedNew:false};renderAll();
+  toast('Split saved \u00b7 your share \u20b9'+fmt(me)+' of \u20b9'+fmt(tot),undoSnap);
+}
+function settleHtml_(t){const d=document.createElement('div');d.className='qsettle';d.innerHTML='<span class="ql">Settle</span><span>friend returned \u20b9</span><input class="qsin qsa" type="number" min="0" inputmode="decimal" value="'+(t.split?t.split.mine:0)+'"><button class="chip" data-act="stsave">Settle</button><button class="chip" data-act="stcancel">Cancel</button>';return d}
+function doSettle_(t,f){
+  if(!t.split)return;
+  const ret=+f.querySelector('.qsa').value;
+  if(!(ret>=0)||ret>t.split.total){toast('Returned must be between 0 and \u20b9'+fmt(t.split.total));return}
+  let removed=null;
+  if(ret>0){const c=state.tx.filter(x=>x.id!==t.id&&x.type==='income'&&!x.split&&isPending_(x)&&Number(x.amount)===ret&&String(x.date)>=String(t.date)).sort((a,b)=>b.date.localeCompare(a.date))[0];if(c){queueDel_(c.id);state.tx=state.tx.filter(x=>x.id!==c.id);removed=c}}
+  const fin=Math.max(0,t.split.total-ret);
+  t.amount=fin;t.split=null;t.m=true;t.review=false;queuePush_(t);save();renderAll();
+  toast('Settled \u00b7 your final spend \u20b9'+fmt(fin)+(removed?' \u00b7 return row removed':ret>0?' \u00b7 no pending return row found':''));
+}
+
 /* ---------- toast / tooltip ---------- */
 let toastT;
 let undoSnap=null;
 function toast(msg,undo){const t=$('toast');t.innerHTML='';const s=document.createElement('span');s.textContent=msg;t.appendChild(s);undoSnap=undo||null;if(undoSnap){const b=document.createElement('button');b.className='tundo';b.textContent='Undo';b.onclick=()=>{const u=undoSnap;undoSnap=null;t.classList.remove('show');doUndo_(u)};clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),10000)}else{clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900)}}
-function doUndo_(u){if(!u||!u.prev)return;const t=state.tx.find(x=>x.id===u.prev.id);if(!t)return;t.cat=u.prev.cat;t.note=u.prev.note;t.m=u.prev.m;t.review=u.prev.rev;if(u.learnedNew&&u.note){const lk=learnKey_(u.note);if(lk&&state.learn&&state.learn[lk])delete state.learn[lk]}queuePush_(t);save();renderAll();toast('Reverted')}
+function doUndo_(u){if(!u||!u.prev)return;const t=state.tx.find(x=>x.id===u.prev.id);if(!t)return;t.cat=u.prev.cat;t.note=u.prev.note;t.m=u.prev.m;t.review=u.prev.rev;if(u.prev.amount!==undefined)t.amount=u.prev.amount;if('split' in u.prev)t.split=u.prev.split;if(u.learnedNew&&u.note){const lk=learnKey_(u.note);if(lk&&state.learn&&state.learn[lk])delete state.learn[lk]}queuePush_(t);save();renderAll();toast('Reverted')}
 const tip=$('tip');
 function showTip(x,y,text){tip.textContent=text;tip.style.opacity=1;tip.style.left=Math.min(x+14,innerWidth-160)+'px';tip.style.top=(y-38)+'px'}
 function hideTip(){tip.style.opacity=0}
@@ -1702,6 +1738,7 @@ function init(){
     toast('Category \u201c'+nm.trim()+'\u201d added');
   });
   $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal()});
+  $('mSplit').addEventListener('change',()=>{$('mSplitBox').style.display=$('mSplit').checked?'inline-flex':'none'});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&$('overlay').classList.contains('show'))saveTx()});
   
   $('txList').addEventListener('click',e=>{
@@ -1713,6 +1750,9 @@ function init(){
     if(chip){saveQuickTag(t.id,chip.dataset.cat,txt)}
     else if(e.target.closest('[data-act="qsave"]')){const hit=matchCatLabel(txt);saveQuickTag(t.id,hit||(txt.length>=2?makeCat(txt,t.type):t.cat),txt)}
     else if(e.target.closest('[data-act="qnew"]')){if(txt.length>=2)saveQuickTag(t.id,makeCat(txt,t.type),txt)}
+    else if(e.target.closest('[data-act="qsplit"]')){const f=row.querySelector('.qsplit');if(f){f.style.display=f.style.display==='none'?'flex':'none';const st=f.querySelector('.qst');if(st&&!st.value){st.value=t.amount;f.querySelector('.qsm').value=Math.round(t.amount/2)}}}
+    else if(e.target.closest('[data-act="qscancel"]')){const f=row.querySelector('.qsplit');if(f)f.style.display='none'}
+    else if(e.target.closest('[data-act="qssave"]')){saveSplit_(t,row)}
   });
   $('txList').addEventListener('input',e=>{
     const inp=e.target.closest('.qin');if(!inp)return;

@@ -979,7 +979,7 @@ function autoCat_(t){
   return 'other';
 }
 function mergeTxns(incoming,quiet,markReview){
-  let added=0;
+  let added=0,upd=0;
   const key=t=>t.id||[t.date,t.amount,t.type,t.note||''].join('|');
   const seen=new Set(state.tx.map(key));
   (incoming||[]).forEach(t=>{
@@ -987,7 +987,7 @@ function mergeTxns(incoming,quiet,markReview){
     const k=key(t);
     if(seen.has(k)){
       const ex=state.tx.find(x=>key(x)===k);
-      if(ex){if(t.m===false&&ex.m===true){ex.cat=t.cat||ex.cat;ex.note=t.note||ex.note;ex.m=false;ex.review=(t.review==null)?true:!!t.review;return;}if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;}if(t.m&&!ex.m){if(t.cat)ex.cat=t.cat;if(t.note&&!genericNote_(t.note))ex.note=t.note;if(t.time&&!ex.time)ex.time=t.time;ex.m=true;ex.review=false;}}
+      if(ex){if(t.m===false&&ex.m===true){ex.cat=t.cat||ex.cat;ex.note=t.note||ex.note;ex.m=false;ex.review=(t.review==null)?true:!!t.review;upd++;return;}if(t.time&&!ex.time){ex.time=t.time;upd++}if(t.bank&&!ex.bank){ex.bank=t.bank;upd++}if(t.src&&!ex.src){ex.src=t.src;upd++}if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;upd++;}if(t.m&&!ex.m){if(t.cat)ex.cat=t.cat;if(t.note&&!genericNote_(t.note))ex.note=t.note;if(t.time&&!ex.time)ex.time=t.time;ex.m=true;ex.review=false;upd++;}}
       return;
     }
     seen.add(k);
@@ -995,9 +995,9 @@ function mergeTxns(incoming,quiet,markReview){
     state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:c,date:t.date,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||'',note:t.note||'',m:!!t.m,review:t.review!=null?!!t.review:(!!markReview&&!learned)});
     added++;
   });
-  if(added){renderAll();toast('Synced '+added+' new transaction'+(added===1?'':'s')+' · tag them below')}
+  if(added){renderAll();toast('Synced '+added+' new transaction'+(added===1?'':'s')+' · tag them below')}else if(upd){renderAll();if(!quiet)toast('Synced tag updates')}
   else if(!quiet) toast('Nothing new to sync');
-  return added;
+  return added+upd;
 }
 function notifyNew(list){
   const fresh=(list||[]).filter(t=>t&&t.review);

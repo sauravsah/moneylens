@@ -841,7 +841,7 @@ function saveQuickTag(id,cat,note){
   const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true};
   if(cat)t.cat=cat;if(note)t.note=note.slice(0,60);
   t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(fn,cat);save();renderAll();
-  toast('Tagged · '+CATS[t.cat].l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''),{prev:prev,note:fn,learnedNew:!!cat&&!learned0});
+  toast('Tagged · '+catMeta(t.cat).l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''),{prev:prev,note:fn,learnedNew:!!cat&&!learned0});
 }
 function qtagHtml(t){
   const cats=t.type==='income'?INC_CATS:EXP_CATS;
@@ -920,6 +920,19 @@ function learnTag_(note,cat){
   state.learn[k]=cat;var ks=Object.keys(state.learn);if(ks.length>150)delete state.learn[ks[0]];
 }
 function purgeLearn_(){try{if(!state.learn)return;for(var k in state.learn){if(k==='www'||genericNote_(k)||k.length<3)delete state.learn[k]}}catch(e){}}
+function adoptCats_(){
+  try{
+    state.customCats=state.customCats||[];let n=0;
+    state.tx.forEach(function(t){
+      const c=t&&t.cat;if(!c||CATS[c])return;
+      const note=String(t.note||'').trim();
+      const label=(note&&!genericNote_(note)&&note!=='www'&&note.length>=2&&note.length<=24)?note:c;
+      CATS[c]={l:label.charAt(0).toUpperCase()+label.slice(1),i:'\ud83c\udff3\ufe0f',c:CPAL[Object.keys(CATS).length%CPAL.length],t:t.type==='income'?'income':'expense'};
+      state.customCats.push({slug:c,l:CATS[c].l,i:CATS[c].i,c:CATS[c].c,t:CATS[c].t,g:''});n++;
+    });
+    if(n){recomputeCats();save()}
+  }catch(e){}
+}
 /* ---------- missing-transaction reports ---------- */
 function openReportForm(){
   if(!SYNC_URL){toast('Connect your feed first (setup, step 3)');return}
@@ -1063,6 +1076,7 @@ function reconcileSync_(list,quiet){
       next.push(Object.assign({},ex));
       if(ex.m&&ex.id){queuePush_(ex);pushed++}
     });
+    adoptCats_();
     const key=t=>[t.id,t.cat,t.note,t.m,t.review,t.amount,t.date,t.type,t.time,t.bank,t.src,t.ref].join('|');
     const before=state.tx.map(key).join('\n'),after=next.map(key).join('\n');
     const changed=before!==after;
@@ -1445,7 +1459,7 @@ function filtered(){
     .filter(t=>!state.ui.untagged||t.review)
     .filter(t=>state.ui.cat==='all'||t.cat===state.ui.cat)
     .filter(t=>state.ui.bank==='all'||t.bank===state.ui.bank)
-    .filter(t=>!q||(t.note||'').toLowerCase().includes(q)||CATS[t.cat].l.toLowerCase().includes(q))
+    .filter(t=>!q||(t.note||'').toLowerCase().includes(q)||(CATS[t.cat]||{l:''}).l.toLowerCase().includes(q))
     .sort((a,b)=>b.date.localeCompare(a.date));
 }
 function renderList(){
@@ -1623,7 +1637,7 @@ function init(){
     const ex=$('setExport');
     if(ex)ex.onclick=()=>{const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),transactions:state.tx,budgets:state.budgets},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='moneylens-export-'+todayStr()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('Export downloaded')};
     const cx=$('setCsv');
-    if(cx)cx.onclick=()=>{const rows=[['date','type','category','amount','note']].concat(state.tx.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.type,CATS[t.cat].l,t.amount,(t.note||'').replace(/"/g,'\\"')]));const csv=rows.map(r=>r.map(v=>'"'+String(v)+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='moneylens-'+todayStr()+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('CSV downloaded')};
+    if(cx)cx.onclick=()=>{const rows=[['date','type','category','amount','note']].concat(state.tx.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.type,catMeta(t.cat).l,t.amount,(t.note||'').replace(/"/g,'\\"')]));const csv=rows.map(r=>r.map(v=>'"'+String(v)+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='moneylens-'+todayStr()+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('CSV downloaded')};
     const im=$('setImport');
     if(im)im.addEventListener('change',ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);const inc=(j.transactions||j.tx||[]).filter(t=>t&&t.amount>0&&t.date);if(!inc.length){toast('No transactions found in that file');return}mergeTxns(inc,true,false);renderAll();toast('Import merged \u00b7 '+state.tx.length+' total')}catch(e){toast('Could not read that file')}};rd.readAsText(f);ev.target.value='';});
     const cl=$('setClear');

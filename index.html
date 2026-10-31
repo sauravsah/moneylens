@@ -1507,7 +1507,7 @@ function renderList(){
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
     const urow=undoSnap&&undoSnap.prev&&undoSnap.prev.id===t.id;
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
-      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}${t.split?' <span class="spb">\ud83d\udc65 '+fmt(t.split.mine)+' of \u20b9'+fmt(t.split.total)+'</span>':''}${urow?' <button class="uroChip" data-uro="1" title="Revert this tag">\u21a9 Undo</button>':''}${t.split?' <button class="chip stl" data-act="settle">\u2713 Settle</button>':''}</div></div>
+      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}${t.split?' <span class="spb">\ud83d\udc65 '+fmt(t.split.mine)+' of '+fmt(t.split.total)+'</span>':''}${urow?' <button class="uroChip" data-uro="1" title="Revert this tag">\u21a9 Undo</button>':''}${t.split?' <button class="chip stl" data-act="settle">\u2713 Settle</button>':''}</div></div>
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
       if(isPending_(t)){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
@@ -1568,18 +1568,18 @@ function saveSplit_(t,row){
   const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true,amount:t.amount,split:t.split};
   t.split={total:tot,mine:me};t.amount=me;t.review=false;t.m=true;queuePush_(t);save();
   undoSnap={prev:prev,note:t.note,learnedNew:false};renderAll();
-  toast('Split saved \u00b7 your share \u20b9'+fmt(me)+' of \u20b9'+fmt(tot),undoSnap);
+  toast('Split saved \u00b7 your share '+fmt(me)+' of '+fmt(tot),undoSnap);
 }
 function settleHtml_(t){const d=document.createElement('div');d.className='qsettle';d.innerHTML='<span class="ql">Settle</span><span>friend returned \u20b9</span><input class="qsin qsa" type="number" min="0" inputmode="decimal" value="'+(t.split?t.split.mine:0)+'"><button class="chip" data-act="stsave">Settle</button><button class="chip" data-act="stcancel">Cancel</button>';return d}
 function doSettle_(t,f){
   if(!t.split)return;
   const ret=+f.querySelector('.qsa').value;
-  if(!(ret>=0)||ret>t.split.total){toast('Returned must be between 0 and \u20b9'+fmt(t.split.total));return}
+  if(!(ret>=0)||ret>t.split.total){toast('Returned must be between 0 and '+fmt(t.split.total));return}
   let removed=null;
   if(ret>0){const c=state.tx.filter(x=>x.id!==t.id&&x.type==='income'&&!x.split&&isPending_(x)&&Number(x.amount)===ret&&String(x.date)>=String(t.date)).sort((a,b)=>b.date.localeCompare(a.date))[0];if(c){queueDel_(c.id);state.tx=state.tx.filter(x=>x.id!==c.id);removed=c}}
   const fin=Math.max(0,t.split.total-ret);
   t.amount=fin;t.split=null;t.m=true;t.review=false;queuePush_(t);save();renderAll();
-  toast('Settled \u00b7 your final spend \u20b9'+fmt(fin)+(removed?' \u00b7 return row removed':ret>0?' \u00b7 no pending return row found':''));
+  toast('Settled \u00b7 your final spend '+fmt(fin)+(removed?' \u00b7 return row removed':ret>0?' \u00b7 no pending return row found':''));
 }
 
 /* ---------- toast / tooltip ---------- */

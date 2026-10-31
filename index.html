@@ -1487,7 +1487,9 @@ function syncFilterChips(f){
   document.querySelectorAll('.filters .chip[data-type]').forEach(x=>x.classList.toggle('on',x.dataset.type===f));
 }
 function renderList(){
-  const list=filtered(),wrap=$('txList');wrap.innerHTML='';
+  const list=filtered();
+  if(state.ui.filter==='untagged'&&undoSnap&&undoSnap.prev){const ur=state.tx.find(x=>x.id===undoSnap.prev.id);if(ur&&!list.includes(ur)){list.push(ur);list.sort((a,b)=>b.date.localeCompare(a.date))}}
+  const wrap=$('txList');wrap.innerHTML='';
   const unN=state.tx.filter(x=>isPending_(x)).length;
   $('txCount').textContent=list.length+' in '+monthLabel(state.ui.month)+(unN?' · '+unN+' to tag':'');
   if(!list.length){wrap.innerHTML='<div class="empty"><div class="e">🍃</div>No transactions match. Add one or change the filters.</div>';return}

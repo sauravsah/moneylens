@@ -915,9 +915,11 @@ function learnHit_(ln){
 }
 function learnTag_(note,cat){
   var k=learnKey_(note);if(!k||!cat||k==='untagged')return;
+  if(k==='www'||genericNote_(k)||k.length<3)return;
   state.learn=state.learn||{};if(state.learn[k]===cat)return;
   state.learn[k]=cat;var ks=Object.keys(state.learn);if(ks.length>150)delete state.learn[ks[0]];
 }
+function purgeLearn_(){try{if(!state.learn)return;for(var k in state.learn){if(k==='www'||genericNote_(k)||k.length<3)delete state.learn[k]}}catch(e){}}
 /* ---------- missing-transaction reports ---------- */
 function openReportForm(){
   if(!SYNC_URL){toast('Connect your feed first (setup, step 3)');return}
@@ -1028,6 +1030,7 @@ function dedupeSync_(list){
 function sameDayish_(a,b){return !a||!b||a===b}
 function reconcileSync_(list,quiet){
   try{
+    purgeLearn_();
     if(!Array.isArray(list)||!list.length)return 0;
     const feedById={};list.forEach(t=>{if(t&&t.id)feedById[t.id]=t});
     const next=[];let dropped=0,pushed=0;

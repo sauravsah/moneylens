@@ -1211,20 +1211,22 @@ function countUp(el,target,suffix,pct){
 function dlbl(c,p){if(!(p>0))return '';const d=Math.round((c-p)/p*100);return (d>=0?'+':'\u2212')+Math.abs(d)+'% vs last month'}
 function renderStats(){
   const key=state.ui.month,all=state.tx;
-  const pk=monthShift(key,-1),pinc=sum(t=>mKey(t.date)===pk&&t.type==='income'),pexp=sum(t=>mKey(t.date)===pk&&t.type==='expense');
-  const bal=sum(t=>t.type==='income')-sum(t=>t.type==='expense');
+  const pk=monthShift(key,-1),pinc=sum(t=>mKey(t.date)===pk&&t.type==='income'),pexp=sum(t=>mKey(t.date)===pk&&t.type==='expense'&&!isPending_(t));
+  const bal=sum(t=>t.type==='income')-sum(t=>t.type==='expense'&&!isPending_(t));
   const inc=sum(t=>mKey(t.date)===key&&t.type==='income');
-  const exp=sum(t=>mKey(t.date)===key&&t.type==='expense');
+  const exp=sum(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
   const rate=inc>0?Math.max(0,(inc-exp)/inc*100):0;
   countUp($('sBal'),bal);countUp($('sInc'),inc);countUp($('sExp'),exp);countUp($('sSav'),rate,0,true);
   $('sIncSub').textContent='in '+monthLabel(key)+(dlbl(inc,pinc)?' \u00b7 '+dlbl(inc,pinc):'');
   $('sExpSub').textContent='in '+monthLabel(key)+(dlbl(exp,pexp)?' \u00b7 '+dlbl(exp,pexp):'');
+  const uexp=sum(t=>mKey(t.date)===key&&t.type==='expense'&&isPending_(t));
+  if(uexp>0)$('sExpSub').textContent+=' \u00b7 '+fmt(uexp)+' untagged not counted';
   $('sSavSub').textContent=exp>0?fmt(exp)+' spent this month':'no spend yet';
   $('sBalSub').textContent='across '+(new Set(all.map(t=>mKey(t.date)))).size+' months';
-  spark('sp0',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense');return i-e}));
+  spark('sp0',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t));return i-e}));
   spark('sp1',last6(key).map(k=>sum(t=>mKey(t.date)===k&&t.type==='income')),'#34d399');
-  spark('sp2',last6(key).map(k=>sum(t=>mKey(t.date)===k&&t.type==='expense')),'#fb7185');
-  spark('sp3',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense');return i>0?Math.max(0,(i-e)/i*100):0}),'#fbbf24',true);
+  spark('sp2',last6(key).map(k=>sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t))),'#fb7185');
+  spark('sp3',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t));return i>0?Math.max(0,(i-e)/i*100):0}),'#fbbf24',true);
 }
 
 function setup(c){
@@ -1258,12 +1260,12 @@ function daysInMonth_(key){const y=+key.split('-')[0],m=+key.split('-')[1];retur
 let payeesOpen=false,donutMoreOpen=false,budMoreOpen=false;
 function renderInsightsExtra(){
   const key=state.ui.month;if(!$('insExtra'))return;
-  const exp=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
+  const exp=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
   const inc=state.tx.filter(t=>mKey(t.date)===key&&t.type==='income').reduce((a,t)=>a+t.amount,0);
   const tot=exp.reduce((a,t)=>a+t.amount,0);
   const isCur=mKey(todayStr())===key,dim=daysInMonth_(key);
   const days=isCur?Math.max(1,new Date().getDate()):dim;
-  const untag=state.tx.filter(t=>mKey(t.date)===key&&(t.cat==='other'||t.cat==='otherin')).length;
+  const untag=state.tx.filter(t=>mKey(t.date)===key&&isPending_(t)).length;
   let big=null;exp.forEach(t=>{if(!big||t.amount>big.amount)big=t});
   const chips=[
     [String(exp.length)+' payments',(state.tx.filter(t=>mKey(t.date)===key&&t.type==='income').length)+' income \u00b7 '+untag+' untagged'],
@@ -1310,7 +1312,7 @@ function renderInsightsExtra(){
     showChartDetail(state.tx.filter(t=>payeeLabel_(t)===row.dataset.note&&mKey(t.date)===state.ui.month&&t.type==='expense').sort(cdSort),monthLabel(state.ui.month)+' \u00b7 '+row.dataset.note);
   })}
   const pk=monthShift(key,-1);
-  const lexp=state.tx.filter(t=>mKey(t.date)===pk&&t.type==='expense');
+  const lexp=state.tx.filter(t=>mKey(t.date)===pk&&t.type==='expense'&&!isPending_(t));
   const lgrp={};lexp.forEach(t=>{const k=payeeLabel_(t);lgrp[k]=(lgrp[k]||0)+t.amount});
   const all=Object.keys(grp).concat(Object.keys(lgrp).filter(k=>!grp[k]));
   const rows=all.map(k=>({k:k,v:grp[k]?grp[k].v:0,lv:lgrp[k]||0})).sort((x,y)=>(y.v+y.lv)-(x.v+x.lv)).slice(0,6);
@@ -1342,6 +1344,8 @@ function refreshChartDetail(){
   }else if(window._cdQ.mode==='payee'){
     const p=window._cdQ.p;
     showChartDetail(state.tx.filter(t=>payeeLabel_(t)===p&&mKey(t.date)===state.ui.month&&t.type==='expense').sort(cdSort),monthLabel(state.ui.month)+' \u00b7 '+p);
+  }else if(window._cdQ.mode==='untagged'){
+    showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&isPending_(t)).sort(cdSort),monthLabel(state.ui.month)+' · Untagged');
   }else{
     const cat=window._cdQ.cat,c=CATS[cat]||{l:cat};
     showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===cat).sort(cdSort),monthLabel(state.ui.month)+' · '+c.l);
@@ -1350,14 +1354,14 @@ function refreshChartDetail(){
 function renderCharts(){
   drawBars();drawDonut();refreshChartDetail();renderInsightsExtra();
   const key=state.ui.month;
-  const inc=sum(t=>mKey(t.date)===key&&t.type==='income'),exp=sum(t=>mKey(t.date)===key&&t.type==='expense');
+  const inc=sum(t=>mKey(t.date)===key&&t.type==='income'),exp=sum(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
   $('legInc').textContent=fmtk(inc);$('legExp').textContent=fmtk(exp);
 }
 function drawBars(){
   const c=$('barChart');const _s=setup(c);if(!_s)return;const{ctx,w,h}=_s;
   const months=last6(state.ui.month);
   const inc=months.map(k=>sum(t=>mKey(t.date)===k&&t.type==='income'));
-  const exp=months.map(k=>sum(t=>mKey(t.date)===k&&t.type==='expense'));
+  const exp=months.map(k=>sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t)));
   const max=Math.max(...inc,...exp,1)*1.18,pad={l:8,r:8,t:14,b:26};
   const cw=(w-pad.l-pad.r)/months.length,bw=Math.min(20,cw*.28),gap=6;
   barGeom=[];
@@ -1375,7 +1379,7 @@ function drawBars(){
     ctx.fillText(MON[+k.split('-')[1]-1],cx,h-8);
   });
 }
-function catMeta(c){return CATS[c]||{l:'Other',i:'\u2753',c:'#94a3b8'}}
+function catMeta(c){if(c==='__untag')return{l:'Untagged',i:'\ud83c\udfe9',c:'#94a3b8'};return CATS[c]||{l:'Other',i:'\u2753',c:'#94a3b8'}}
 function centerFull(){
   const D=window._donut;if(!D)return;
   const ltot=state.tx.filter(t=>mKey(t.date)===monthShift(D.key,-1)&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -1396,8 +1400,8 @@ function purgeDemo_(){
 function drawDonut(){
   const c=$('donutChart'),key=state.ui.month;
   const mtx=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense');
-  const byCat={},cnt={};mtx.forEach(t=>{const cc=CATS[t.cat]?t.cat:'other';byCat[cc]=(byCat[cc]||0)+t.amount;cnt[cc]=(cnt[cc]||0)+1});
-  const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const byCat={},cnt={};mtx.forEach(t=>{const cc=isPending_(t)?'__untag':(CATS[t.cat]?t.cat:'other');byCat[cc]=(byCat[cc]||0)+t.amount;cnt[cc]=(cnt[cc]||0)+1});
+  const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const uix=rows.findIndex(r=>r[0]==='__untag');if(uix>0)rows.unshift(rows.splice(uix,1)[0]);
   const total=rows.reduce((a,r)=>a+r[1],0);
   $('donutSub').textContent=monthLabel(key);
   const _s=setup(c);if(!_s)return;const{ctx,w,h}=_s;const cx=w/2,cy=h/2,R=Math.min(w,h)/2-6,r0=R*.62;
@@ -1430,8 +1434,8 @@ function renderBudgets(){
   const inWin=t=>t.date>=win.start&&t.date<=win.end;
   const rows=EXP_CATS.map(cat=>{
     const b=state.budgets[cat]||0;
-    const s=sum(t=>inWin(t)&&t.type==='expense'&&t.cat===cat);
-    const n=state.tx.filter(t=>inWin(t)&&t.type==='expense'&&t.cat===cat).length;
+    const s=sum(t=>inWin(t)&&t.type==='expense'&&t.cat===cat&&!isPending_(t));
+    const n=state.tx.filter(t=>inWin(t)&&t.type==='expense'&&t.cat===cat&&!isPending_(t)).length;
     tb+=b;ts+=s;return{cat,b,s,n};
   });
   const inc=sum(t=>inWin(t)&&t.type==='income')||(function(){try{return +(localStorage.getItem('ml_income')||0)}catch(e){return 0}})();
@@ -1461,10 +1465,15 @@ function renderBudgets(){
   });
 }
 
+function isPending_(t){
+  if(!t)return false;
+  if(t.type==='income')return !!t.review;
+  return !!t.review||(!t.m&&t.cat==='other');
+}
 function filtered(){
   const q=state.ui.q.toLowerCase();
   return state.tx.filter(t=>mKey(t.date)===state.ui.month)
-    .filter(t=>state.ui.filter==='all'||(state.ui.filter==='income'?t.type==='income':state.ui.filter==='expense'?t.type==='expense':state.ui.filter==='untagged'?!!t.review:state.ui.filter==='tagged'?!t.review:true))
+    .filter(t=>state.ui.filter==='all'||(state.ui.filter==='income'?t.type==='income':state.ui.filter==='expense'?t.type==='expense':state.ui.filter==='untagged'?isPending_(t):state.ui.filter==='tagged'?!isPending_(t):true))
     .filter(t=>state.ui.cat==='all'||t.cat===state.ui.cat)
     .filter(t=>state.ui.bank==='all'||t.bank===state.ui.bank)
     .filter(t=>!q||(t.note||'').toLowerCase().includes(q)||(CATS[t.cat]||{l:''}).l.toLowerCase().includes(q))
@@ -1476,20 +1485,19 @@ function syncFilterChips(f){
 }
 function renderList(){
   const list=filtered(),wrap=$('txList');wrap.innerHTML='';
-  const unN=state.tx.filter(x=>x.review).length;
+  const unN=state.tx.filter(x=>isPending_(x)).length;
   $('txCount').textContent=list.length+' in '+monthLabel(state.ui.month)+(unN?' · '+unN+' to tag':'');
   if(!list.length){wrap.innerHTML='<div class="empty"><div class="e">🍃</div>No transactions match. Add one or change the filters.</div>';return}
   list.forEach((t,i)=>{
     const c=CATS[t.cat]||{l:(t.cat||'Other'),i:'\u2753',c:'#94a3b8'};
     const d=document.createElement('div');d.className='tx';d.style.animationDelay=(Math.min(i,12)*.025)+'s';
     d.innerHTML=`<div class="ic" style="background:${c.c}22;border:1px solid ${c.c}44">${c.i}</div>
-      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${t.review?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}</div></div>
+      <div class="meta"><div class="t">${t.note||c.l}</div><div class="s">${prettyDate(t.date)}${t.time?' · '+fmtTime(t.time):''} · ${isPending_(t)?'Untagged':c.l}${t.src?' <span class="srcb">'+(t.src==='sms'?'SMS':'email')+'</span>':''}</div></div>
       <div class="amt ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>`;
       d.dataset.tid=t.id;
-      if(t.review){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
+      if(isPending_(t)){d.classList.add('untagged');d.innerHTML+=qtagHtml(t)}
     d.addEventListener('click',e=>{
       if(e.target.closest('.qtag'))return;
-      if(!t.m&&(t.cat==='other'||t.cat==='otherin')&&!t.review){t.review=true;save();renderList();return}
       openModal(t);
     });
     wrap.appendChild(d);
@@ -1681,7 +1689,7 @@ function init(){
   $('txList').addEventListener('click',e=>{
     const q=e.target.closest('.qtag');if(!q)return;
     const row=e.target.closest('.tx');if(!row)return;
-    const t=state.tx.find(x=>x.id===row.dataset.tid);if(!t||!t.review)return;
+    const t=state.tx.find(x=>x.id===row.dataset.tid);if(!t||!isPending_(t))return;
     const inp=row.querySelector('.qin');const txt=inp?inp.value.trim():'';
     const chip=e.target.closest('[data-cat]');
     if(chip){saveQuickTag(t.id,chip.dataset.cat,txt)}
@@ -1702,7 +1710,7 @@ function init(){
   $('txList').addEventListener('change',e=>{
     const sel=e.target.closest('.qsel');if(!sel)return;
     const row=e.target.closest('.tx');if(!row)return;
-    const t=state.tx.find(x=>x.id===row.dataset.tid);if(!t||!t.review)return;
+    const t=state.tx.find(x=>x.id===row.dataset.tid);if(!t||!isPending_(t))return;
     const inp=row.querySelector('.qin');const txt=inp?inp.value.trim():'';
     const v=sel.value;sel.value='';if(!v)return;
     if(v==='__new'){
@@ -1825,8 +1833,8 @@ function init(){
   $('donutLegend').addEventListener('click',e=>{
     if(e.target.closest('.more')){donutMoreOpen=!donutMoreOpen;drawDonut();return}
     const row=e.target.closest('.row');if(!row||!row.dataset.cat)return;
-    window._cdQ={mode:'cat',cat:row.dataset.cat};
-    showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===row.dataset.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+catMeta(row.dataset.cat).l);
+    if(row.dataset.cat==='__untag'){window._cdQ={mode:'untagged'};showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&isPending_(t)).sort(cdSort),monthLabel(state.ui.month)+' · Untagged');}
+    else{window._cdQ={mode:'cat',cat:row.dataset.cat};showChartDetail(state.tx.filter(t=>mKey(t.date)===state.ui.month&&t.type==='expense'&&t.cat===row.dataset.cat).sort(cdSort),monthLabel(state.ui.month)+' · '+catMeta(row.dataset.cat).l);}
   });
   let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderCharts,120)});
 }

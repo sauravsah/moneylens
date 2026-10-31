@@ -737,7 +737,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <div class="set-row" id="setCatList" style="margin-top:8px"></div>
         <div class="set-note">Custom categories work everywhere: tagging, filters, budgets and charts.</div>
       </div>
-      <div class="set-note" style="margin-top:16px">MoneyLens v3.7 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
+      <div class="set-note" style="margin-top:16px">MoneyLens v3.8 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
     </section>
   </section>
   </main>
@@ -837,7 +837,7 @@ function matchCatLabel(text){
 function saveQuickTag(id,cat,note){
   const t=state.tx.find(x=>x.id===id);if(!t)return;
   if(cat)t.cat=cat;if(note)t.note=note.slice(0,60);
-  t.review=false;t.m=true;if(cat)learnTag_(note||t.note,cat);save();renderAll();
+  t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(note||t.note,cat);save();renderAll();
   toast('Tagged · '+CATS[t.cat].l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''));
 }
 function qtagHtml(t){
@@ -983,12 +983,13 @@ function mergeTxns(incoming,quiet,markReview){
     if(!t||!(t.amount>0)||!t.date)return;
     const k=key(t);
     if(seen.has(k)){
-      if(t.time||t.bank||t.src||t.note){const ex=state.tx.find(x=>key(x)===k);if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;}}}
+      const ex=state.tx.find(x=>key(x)===k);
+      if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;}if(t.m&&!ex.m){if(t.cat)ex.cat=t.cat;if(t.note&&!genericNote_(t.note))ex.note=t.note;if(t.time&&!ex.time)ex.time=t.time;ex.m=true;ex.review=false;}}
       return;
     }
     seen.add(k);
-    const c=autoCat_(t);const ln2=learnKey_(t.note);const learned=ln2?!!learnHit_(ln2):false;
-    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:c,date:t.date,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||'',note:t.note||'',review:t.review!=null?!!t.review:(!!markReview&&!learned)});
+    const c=(t.m&&t.cat)?t.cat:autoCat_(t);const ln2=learnKey_(t.note);const learned=ln2?!!learnHit_(ln2):false;
+    state.tx.push({id:t.id||uid(),type:t.type||'expense',amount:t.amount,cat:c,date:t.date,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||'',note:t.note||'',m:!!t.m,review:t.review!=null?!!t.review:(!!markReview&&!learned)});
     added++;
   });
   if(added){renderAll();toast('Synced '+added+' new transaction'+(added===1?'':'s')+' · tag them below')}
@@ -1030,6 +1031,11 @@ function load(){
   save();
 }
 function save(){try{localStorage.setItem(LS,JSON.stringify({tx:state.tx,budgets:state.budgets,customCats:state.customCats,settings:state.settings,recIgnore:state.recIgnore,reports:state.reports||[],learn:state.learn||{}}))}catch(e){}}
+/* ---------- two-way sync: push local changes up to the feed ---------- */
+const PUSHQ='ml_pushq';
+function queuePush_(t){try{if(!t||!t.id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const row={id:t.id,date:t.date,amount:t.amount,type:t.type,note:t.note,cat:t.cat,m:true,review:false,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||''};const ix=q.findIndex(x=>!x.del&&x.id===row.id);if(ix>=0)q[ix]=row;else q.push(row);localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
+function queueDel_(id){try{if(!id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');q.push({del:id});localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
+function flushPush_(){try{if(!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');if(!q.length)return;const tags=q.filter(x=>!x.del).slice(0,50);const dels=q.filter(x=>x.del).slice(0,50);if(!tags.length&&!dels.length)return;const clear=()=>{try{const q2=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const keep=q2.filter(x=>{if(x.del)return!dels.some(d=>d.del===x.del);return!tags.some(t=>t.id===x.id)});localStorage.setItem(PUSHQ,JSON.stringify(keep))}catch(e){}};const sendDels=()=>{if(!dels.length)return;fetch(SYNC_URL,{method:'POST',body:JSON.stringify({push:'del',ids:dels.map(d=>d.del)})}).then(r=>r.json()).then(j=>{if(j&&j.ok)clear()}).catch(()=>{})};if(tags.length)fetch(SYNC_URL,{method:'POST',body:JSON.stringify({push:'txns',txns:tags})}).then(r=>r.json()).then(j=>{if(j&&j.ok){clear();sendDels()}}).catch(()=>{});else sendDels()}catch(e){}}
 
 /* ---------- aggregates ---------- */
 function sum(filter){return state.tx.filter(filter).reduce((a,t)=>a+t.amount,0)}
@@ -1414,13 +1420,13 @@ function saveTx(){
   if(!$('mDate').value){toast('Pick a date');return}
   const type=document.querySelector('#segType button.on').dataset.t;
   const data={type,amount:amt,cat:$('mCat').value,date:$('mDate').value,note:$('mNote').value.trim()};
-  if(editingId){const t=state.tx.find(x=>x.id===editingId);Object.assign(t,data);t.review=false;t.m=true;if(data.cat)learnTag_(data.note||t.note,data.cat);toast('Updated')}
-  else{state.tx.push({id:uid(),...data});toast(type==='income'?'Income added 🎉':'Expense added')}
+  if(editingId){const t=state.tx.find(x=>x.id===editingId);Object.assign(t,data);t.review=false;t.m=true;queuePush_(t);if(data.cat)learnTag_(data.note||t.note,data.cat);toast('Updated')}
+  else{const nt={id:uid(),...data};state.tx.push(nt);queuePush_(nt);toast(type==='income'?'Income added 🎉':'Expense added')}
   save();
   state.ui.month=mKey(data.date);
   syncMonthUI();closeModal();renderAll();
 }
-function delTx(){if(!editingId)return;state.tx=state.tx.filter(t=>t.id!==editingId);save();closeModal();renderAll();toast('Deleted')}
+function delTx(){if(!editingId)return;queueDel_(editingId);state.tx=state.tx.filter(t=>t.id!==editingId);save();closeModal();renderAll();toast('Deleted')}
 
 /* ---------- toast / tooltip ---------- */
 let toastT;
@@ -1623,6 +1629,7 @@ function init(){
     if(!SYNC_URL)$('importFile').click();
   };
   function pullSync(){
+    flushPush_();
     if(!SYNC_URL)return;
     fetch(SYNC_URL+'?t='+Date.now()).then(r=>r.json()).then(j=>{
       const list=Array.isArray(j)?j:(j.transactions||[]);

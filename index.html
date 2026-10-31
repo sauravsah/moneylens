@@ -712,6 +712,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
       <div class="set-grid">
         <div class="set-box"><label>Monthly take-home (&#8377;)</label><input id="setIncome" type="number" min="0" placeholder="e.g. 58240"></div>
         <div class="set-box"><label>Cycle starts on</label><select id="setSalDay"></select></div>
+        <div class="set-box"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-top:10px"><input id="setSalLast" type="checkbox" style="accent-color:#6366f1;width:16px;height:16px;flex:none"> Salary lands on the last day (count it in next month)</label></div>
       </div>
       <div class="set-row" style="margin-top:14px"><button class="chip" id="setPrefsSave">Save</button><span class="sm" style="align-self:center">Applies to the 50/30/20 guide and salary-cycle budgets</span></div>
       <div class="set-box" style="margin-top:14px">
@@ -876,7 +877,7 @@ const LS='moneylens_v2';
 const SYNC_URL=(function(){try{var u=localStorage.getItem('ml_feed_url');if(u)return u;return localStorage.getItem('ml_manual')?'':''}catch(e){return ''}})();
 const SYNC_BATCH='demo-batch';
 const SYNC=[{"id":"demo-000","type":"income","amount":61530,"cat":"salary","date":"2026-09-01","note":"monthly salary"},{"id":"demo-001","type":"expense","amount":18420,"cat":"rent","date":"2026-09-03","note":"room rent"},{"id":"demo-002","type":"expense","amount":3265,"cat":"bills","date":"2026-09-05","note":"electricity + wifi"},{"id":"demo-003","type":"expense","amount":6250,"cat":"invest","date":"2026-09-07","note":"mutual fund SIP"},{"id":"demo-004","type":"expense","amount":1502,"cat":"bills","date":"2026-09-29","note":"utility"},{"id":"demo-005","type":"expense","amount":1600,"cat":"fun","date":"2026-09-05","note":"bowling"},{"id":"demo-006","type":"expense","amount":193,"cat":"food","date":"2026-09-19","note":"coffee run"},{"id":"demo-007","type":"expense","amount":1428,"cat":"bills","date":"2026-09-19","note":"utility"},{"id":"demo-008","type":"expense","amount":263,"cat":"food","date":"2026-09-14","note":"groceries"},{"id":"demo-009","type":"expense","amount":1082,"cat":"food","date":"2026-09-22","note":"swiggy order"},{"id":"demo-010","type":"expense","amount":959,"cat":"food","date":"2026-09-12","note":"groceries"},{"id":"demo-011","type":"expense","amount":730,"cat":"subscriptions","date":"2026-09-01","note":"subscription"},{"id":"demo-012","type":"expense","amount":220,"cat":"fun","date":"2026-09-17","note":"gaming"},{"id":"demo-013","type":"expense","amount":1369,"cat":"food","date":"2026-09-24","note":"dinner out"},{"id":"demo-014","type":"expense","amount":2101,"cat":"health","date":"2026-09-15","note":"pharmacy"},{"id":"demo-015","type":"expense","amount":3378,"cat":"shopping","date":"2026-09-07","note":"household"},{"id":"demo-016","type":"expense","amount":199,"cat":"food","date":"2026-09-15","note":"swiggy order"},{"id":"demo-017","type":"expense","amount":734,"cat":"bills","date":"2026-09-29","note":"utility"},{"id":"demo-018","type":"expense","amount":1071,"cat":"shopping","date":"2026-09-22","note":"myntra"},{"id":"demo-019","type":"expense","amount":499,"cat":"subscriptions","date":"2026-09-05","note":"subscription"},{"id":"demo-020","type":"expense","amount":334,"cat":"fun","date":"2026-10-14","note":"movie night"},{"id":"demo-021","type":"expense","amount":1473,"cat":"bills","date":"2026-09-01","note":"utility"},{"id":"demo-022","type":"expense","amount":284,"cat":"food","date":"2026-10-24","note":"coffee run"},{"id":"demo-023","type":"expense","amount":199,"cat":"subscriptions","date":"2026-09-08","note":"subscription"},{"id":"demo-024","type":"expense","amount":1053,"cat":"bills","date":"2026-10-13","note":"utility"},{"id":"demo-025","type":"expense","amount":813,"cat":"bills","date":"2026-09-15","note":"utility"},{"id":"demo-026","type":"expense","amount":1556,"cat":"health","date":"2026-10-01","note":"pharmacy"},{"id":"demo-027","type":"expense","amount":963,"cat":"fun","date":"2026-10-24","note":"movie night"},{"id":"demo-028","type":"expense","amount":689,"cat":"food","date":"2026-09-30","note":"zomato"},{"id":"demo-029","type":"expense","amount":3748,"cat":"shopping","date":"2026-10-05","note":"amazon order"},{"id":"demo-030","type":"expense","amount":2066,"cat":"health","date":"2026-09-18","note":"pharmacy"},{"id":"demo-031","type":"expense","amount":772,"cat":"health","date":"2026-09-29","note":"pharmacy"},{"id":"demo-032","type":"expense","amount":1464,"cat":"bills","date":"2026-10-17","note":"utility"},{"id":"demo-033","type":"expense","amount":556,"cat":"food","date":"2026-09-06","note":"swiggy order"},{"id":"demo-034","type":"expense","amount":1022,"cat":"food","date":"2026-10-05","note":"groceries"},{"id":"demo-035","type":"expense","amount":2242,"cat":"health","date":"2026-10-04","note":"pharmacy"},{"id":"demo-036","type":"expense","amount":499,"cat":"subscriptions","date":"2026-10-25","note":"subscription"},{"id":"demo-037","type":"expense","amount":313,"cat":"transport","date":"2026-10-05","note":"auto"},{"id":"demo-038","type":"expense","amount":1176,"cat":"food","date":"2026-10-22","note":"dinner out"},{"id":"demo-039","type":"expense","amount":785,"cat":"other","date":"2026-09-27","note":"misc"},{"id":"demo-040","type":"expense","amount":652,"cat":"food","date":"2026-09-23","note":"groceries"},{"id":"demo-041","type":"expense","amount":779,"cat":"shopping","date":"2026-10-11","note":"amazon order"},{"id":"demo-042","type":"expense","amount":1382,"cat":"other","date":"2026-10-18","note":"misc"},{"id":"demo-043","type":"expense","amount":917,"cat":"health","date":"2026-09-06","note":"pharmacy"},{"id":"demo-044","type":"expense","amount":1043,"cat":"fun","date":"2026-09-13","note":"movie night"},{"id":"demo-045","type":"expense","amount":1526,"cat":"health","date":"2026-09-03","note":"pharmacy"},{"id":"demo-046","type":"expense","amount":299,"cat":"subscriptions","date":"2026-09-19","note":"subscription"},{"id":"demo-047","type":"expense","amount":1307,"cat":"food","date":"2026-09-23","note":"coffee run"},{"id":"demo-048","type":"expense","amount":500,"cat":"other","date":"2026-09-13","note":"misc"},{"id":"demo-049","type":"expense","amount":307,"cat":"transport","date":"2026-09-18","note":"metro card"},{"id":"demo-050","type":"expense","amount":447,"cat":"food","date":"2026-10-17","note":"coffee run"},{"id":"demo-051","type":"expense","amount":453,"cat":"transport","date":"2026-10-13","note":"auto"},{"id":"demo-052","type":"expense","amount":1011,"cat":"fun","date":"2026-09-08","note":"bowling"},{"id":"demo-053","type":"expense","amount":1603,"cat":"other","date":"2026-10-12","note":"misc"},{"id":"demo-054","type":"expense","amount":788,"cat":"other","date":"2026-09-05","note":"misc"},{"id":"demo-055","type":"expense","amount":730,"cat":"subscriptions","date":"2026-10-02","note":"subscription"},{"id":"demo-056","type":"income","amount":12430,"cat":"freelance","date":"2026-09-27","note":"design gig"},{"id":"demo-057","type":"income","amount":8875,"cat":"freelance","date":"2026-09-19","note":"web project"}];
-let state={tx:[],budgets:{food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290},customCats:[],settings:{salaryDay:0},recIgnore:[],reports:[],learn:{},ui:{month:null,type:'all',cat:'all',bank:'all',q:'',untagged:false,tagged:false,filter:'all'}};
+let state={tx:[],budgets:{food:7150,transport:2360,shopping:4480,bills:3910,rent:18420,health:2140,fun:2380,other:1290},customCats:[],settings:{salaryDay:0,shiftSalary:true},recIgnore:[],reports:[],learn:{},ui:{month:null,type:'all',cat:'all',bank:'all',q:'',untagged:false,tagged:false,filter:'all'}};
 let editingId=null;
 
 const $=id=>document.getElementById(id);
@@ -1131,7 +1132,7 @@ function load(){
     if(raw){
       const s=JSON.parse(raw);
       if(s&&Array.isArray(s.tx)){
-        state.tx=s.tx;state.budgets=s.budgets||state.budgets;state.batches=s.batches||[];(s.customCats||[]).forEach(c=>{CATS[c.slug]={l:c.l,i:c.i,c:c.c,t:c.t}});state.customCats=s.customCats||[];recomputeCats();state.settings=Object.assign({salaryDay:0},s.settings||{});state.recIgnore=s.recIgnore||[];state.reports=s.reports||[];state.learn=s.learn||{};
+        state.tx=s.tx;state.budgets=s.budgets||state.budgets;state.batches=s.batches||[];(s.customCats||[]).forEach(c=>{CATS[c.slug]={l:c.l,i:c.i,c:c.c,t:c.t}});state.customCats=s.customCats||[];recomputeCats();state.settings=Object.assign({salaryDay:0},s.settings||{});if(state.settings.shiftSalary===undefined)state.settings.shiftSalary=true;state.recIgnore=s.recIgnore||[];state.reports=s.reports||[];state.learn=s.learn||{};
         if(!state.batches.includes(SYNC_BATCH)){mergeTxns(SYNC);state.batches.push(SYNC_BATCH);save()}
         return;
       }
@@ -1223,9 +1224,9 @@ function countUp(el,target,suffix,pct){
 function dlbl(c,p){if(!(p>0))return '';const d=Math.round((c-p)/p*100);return (d>=0?'+':'\u2212')+Math.abs(d)+'% vs last month'}
 function renderStats(){
   const key=state.ui.month,all=state.tx;
-  const pk=monthShift(key,-1),pinc=sum(t=>mKey(t.date)===pk&&t.type==='income'),pexp=sum(t=>mKey(t.date)===pk&&t.type==='expense'&&!isPending_(t));
+  const pk=monthShift(key,-1),pinc=sum(t=>statMonth_(t)===pk&&t.type==='income'),pexp=sum(t=>mKey(t.date)===pk&&t.type==='expense'&&!isPending_(t));
   const bal=sum(t=>t.type==='income')-sum(t=>t.type==='expense'&&!isPending_(t));
-  const inc=sum(t=>mKey(t.date)===key&&t.type==='income');
+  const inc=sum(t=>statMonth_(t)===key&&t.type==='income');
   const exp=sum(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
   const rate=inc>0?Math.max(0,(inc-exp)/inc*100):0;
   countUp($('sBal'),bal);countUp($('sInc'),inc);countUp($('sExp'),exp);countUp($('sSav'),rate,0,true);
@@ -1235,10 +1236,10 @@ function renderStats(){
   if(uexp>0)$('sExpSub').textContent+=' \u00b7 '+fmt(uexp)+' untagged not counted';
   $('sSavSub').textContent=exp>0?fmt(exp)+' spent this month':'no spend yet';
   $('sBalSub').textContent='across '+(new Set(all.map(t=>mKey(t.date)))).size+' months';
-  spark('sp0',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t));return i-e}));
-  spark('sp1',last6(key).map(k=>sum(t=>mKey(t.date)===k&&t.type==='income')),'#34d399');
+  spark('sp0',last6(key).map(k=>{const i=sum(t=>statMonth_(t)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t));return i-e}));
+  spark('sp1',last6(key).map(k=>sum(t=>statMonth_(t)===k&&t.type==='income')),'#34d399');
   spark('sp2',last6(key).map(k=>sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t))),'#fb7185');
-  spark('sp3',last6(key).map(k=>{const i=sum(t=>mKey(t.date)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t));return i>0?Math.max(0,(i-e)/i*100):0}),'#fbbf24',true);
+  spark('sp3',last6(key).map(k=>{const i=sum(t=>statMonth_(t)===k&&t.type==='income'),e=sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t));return i>0?Math.max(0,(i-e)/i*100):0}),'#fbbf24',true);
 }
 
 function setup(c){
@@ -1269,18 +1270,19 @@ let barGeom=[];
 function genericNote_(n){const s=String(n||'').toLowerCase().replace(/\s+/g,' ').trim();return /^(idfc debit|sms debit|sms credit|bank debit|bank credit)$/.test(s)}
 function payeeLabel_(t){return genericNote_(t.note)?'Unnamed bank alerts':(t.note||'')}
 function daysInMonth_(key){const y=+key.split('-')[0],m=+key.split('-')[1];return new Date(y,m,0).getDate()}
+function statMonth_(t){const k=mKey(t.date);try{if(t&&t.type==='income'&&t.date&&state.settings.shiftSalary&&Number(t.date.slice(8,10))===daysInMonth_(t.date.slice(0,7)))return monthShift(k,1)}catch(e){}return k}
 let payeesOpen=false,donutMoreOpen=false,budMoreOpen=false;
 function renderInsightsExtra(){
   const key=state.ui.month;if(!$('insExtra'))return;
   const exp=state.tx.filter(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
-  const inc=state.tx.filter(t=>mKey(t.date)===key&&t.type==='income').reduce((a,t)=>a+t.amount,0);
+  const inc=state.tx.filter(t=>statMonth_(t)===key&&t.type==='income').reduce((a,t)=>a+t.amount,0);
   const tot=exp.reduce((a,t)=>a+t.amount,0);
   const isCur=mKey(todayStr())===key,dim=daysInMonth_(key);
   const days=isCur?Math.max(1,new Date().getDate()):dim;
   const untag=state.tx.filter(t=>mKey(t.date)===key&&isPending_(t)).length;
   let big=null;exp.forEach(t=>{if(!big||t.amount>big.amount)big=t});
   const chips=[
-    [String(exp.length)+' payments',(state.tx.filter(t=>mKey(t.date)===key&&t.type==='income').length)+' income \u00b7 '+untag+' untagged'],
+    [String(exp.length)+' payments',(state.tx.filter(t=>statMonth_(t)===key&&t.type==='income').length)+' income \u00b7 '+untag+' untagged'],
     [fmtk(Math.round(tot/days))+' /day','avg over '+days+' day'+(days===1?'':'s')],
     [big?fmt(big.amount):'\u2014',big?('biggest \u00b7 '+(big.note||'').slice(0,22)):'no expenses yet'],
     [inc>0?Math.round(Math.max(0,inc-tot)/inc*100)+'% saved':'\u2014',inc>0?('of '+fmtk(inc)+' income'):'no income logged']
@@ -1350,7 +1352,7 @@ function refreshChartDetail(){
   const d=$('chartDetail');if(!d||d.style.display==='none'||!window._cdQ)return;
   if(window._cdQ.mode==='month'){
     const q=window._cdQ;
-    showChartDetail(state.tx.filter(t=>mKey(t.date)===q.k&&t.type===q.side).sort(cdSort),monthLabel(q.k)+' · '+(q.side==='income'?'Income':'Expenses'));
+    showChartDetail(state.tx.filter(t=>statMonth_(t)===q.k&&t.type===q.side).sort(cdSort),monthLabel(q.k)+' · '+(q.side==='income'?'Income':'Expenses'));
   }else if(window._cdQ.mode==='day'){
     showChartDetail(state.tx.filter(t=>t.date===window._cdQ.d).sort(cdSort),prettyDate(window._cdQ.d)+' \u00b7 Money in and out');
   }else if(window._cdQ.mode==='payee'){
@@ -1366,13 +1368,13 @@ function refreshChartDetail(){
 function renderCharts(){
   drawBars();drawDonut();refreshChartDetail();renderInsightsExtra();
   const key=state.ui.month;
-  const inc=sum(t=>mKey(t.date)===key&&t.type==='income'),exp=sum(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
+  const inc=sum(t=>statMonth_(t)===key&&t.type==='income'),exp=sum(t=>mKey(t.date)===key&&t.type==='expense'&&!isPending_(t));
   $('legInc').textContent=fmtk(inc);$('legExp').textContent=fmtk(exp);
 }
 function drawBars(){
   const c=$('barChart');const _s=setup(c);if(!_s)return;const{ctx,w,h}=_s;
   const months=last6(state.ui.month);
-  const inc=months.map(k=>sum(t=>mKey(t.date)===k&&t.type==='income'));
+  const inc=months.map(k=>sum(t=>statMonth_(t)===k&&t.type==='income'));
   const exp=months.map(k=>sum(t=>mKey(t.date)===k&&t.type==='expense'&&!isPending_(t)));
   const max=Math.max(...inc,...exp,1)*1.18,pad={l:8,r:8,t:14,b:26};
   const cw=(w-pad.l-pad.r)/months.length,bw=Math.min(20,cw*.28),gap=6;
@@ -1484,7 +1486,7 @@ function isPending_(t){
 }
 function filtered(){
   const q=state.ui.q.toLowerCase();
-  return state.tx.filter(t=>mKey(t.date)===state.ui.month)
+  return state.tx.filter(t=>statMonth_(t)===state.ui.month)
     .filter(t=>state.ui.filter==='all'||(state.ui.filter==='income'?t.type==='income':state.ui.filter==='expense'?t.type==='expense':state.ui.filter==='untagged'?isPending_(t):state.ui.filter==='tagged'?!isPending_(t):state.ui.filter==='split'?!!t.split:true))
     .filter(t=>state.ui.cat==='all'||t.cat===state.ui.cat)
     .filter(t=>state.ui.bank==='all'||t.bank===state.ui.bank)
@@ -1623,6 +1625,7 @@ function settingsPopInit(){
     try{const si2=$('setIncome');if(si2)si2.value=localStorage.getItem('ml_income')||''}catch(e){}
     try{const sf2=$('setFeed');if(sf2)sf2.value=localStorage.getItem('ml_feed_url')||''}catch(e){}
     try{const ss2=$('setSalDay');if(ss2&&ss2.options.length)ss2.value=String(state.settings.salaryDay||0)}catch(e){}
+    try{const sl3=$('setSalLast');if(sl3)sl3.checked=!!state.settings.shiftSalary}catch(e){}
   }};
   const close=()=>{if(ov)ov.classList.remove('on')};
   const sp=$('setPop');if(sp)sp.onclick=open;
@@ -1666,15 +1669,16 @@ function init(){
     if(ssd){
       for(let i=0;i<=28;i++){const o=document.createElement('option');o.value=i;o.textContent=i===0?'Calendar month':'Day '+i;ssd.appendChild(o)}
       try{ssd.value=String(state.settings.salaryDay||0)}catch(e){}
+      try{const sl2=$('setSalLast');if(sl2)sl2.checked=!!state.settings.shiftSalary}catch(e){}
       ssd.addEventListener('change',()=>{if(sd){sd.value=ssd.value;try{sd.dispatchEvent(new Event('change'))}catch(e){}}});
       if(sd)sd.addEventListener('change',()=>{try{ssd.value=sd.value}catch(e){}});
       const sps=$('setPrefsSave');
       if(sps)sps.addEventListener('click',()=>{
         const v=Math.max(0,+$('setIncome').value||0);
         try{localStorage.setItem('ml_income',String(v))}catch(e){}
-        state.settings.salaryDay=+(ssd.value||0);
+        state.settings.salaryDay=+(ssd.value||0);const ssl=$('setSalLast');if(ssl)state.settings.shiftSalary=!!ssl.checked;
         if(sd&&sd.options.length)sd.value=ssd.value;
-        save();renderBudgets();toast('Settings saved');});
+        save();renderBudgets();renderAll();toast('Settings saved');});
     }
     const sf=$('setFeed');
     if(sf){try{sf.value=localStorage.getItem('ml_feed_url')||''}catch(e){}}
@@ -1877,7 +1881,7 @@ function init(){
     const hit=barGeom.find(g=>x>=g.x&&x<=g.x+g.w&&y>=g.y&&y<=g.y+g.h);
     if(!hit||!hit.k)return;
     window._cdQ={mode:'month',k:hit.k,side:hit.side};
-    showChartDetail(state.tx.filter(t=>mKey(t.date)===hit.k&&t.type===hit.side).sort(cdSort),monthLabel(hit.k)+' · '+(hit.side==='income'?'Income':'Expenses'));
+    showChartDetail(state.tx.filter(t=>statMonth_(t)===hit.k&&t.type===hit.side).sort(cdSort),monthLabel(hit.k)+' · '+(hit.side==='income'?'Income':'Expenses'));
   });
   dc.addEventListener('click',e=>{
     if(!window._donut||!window._donut.slices)return;

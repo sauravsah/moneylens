@@ -1632,6 +1632,7 @@ function settingsPopInit(){
 function init(){
   load();
   try{if(new URLSearchParams(location.search).get('qa')==='tag'){state.tx.push({id:'qa1',type:'expense',amount:240,cat:'other',date:todayStr(),note:'Test merchant pay',src:'sms',review:true});}}catch(e){}
+  try{const pgq=new URLSearchParams(location.search).get('purge');if(pgq){const ids=new Set(pgq.split(',').map(s=>s.trim()).filter(Boolean));const nb=state.tx.length;state.tx=state.tx.filter(t=>!ids.has(String(t.id||'')));if(state.tx.length!==nb){save();toast('Removed '+(nb-state.tx.length)+' duplicate rows')}}}catch(e){}
   try{if(state.tx.some(x=>x.review))state.ui.filter='untagged'}catch(e){}
   syncFilterChips();
   dedupeLocal();
@@ -1715,7 +1716,7 @@ function init(){
     const cx=$('setCsv');
     if(cx)cx.onclick=()=>{const rows=[['date','type','category','amount','note']].concat(state.tx.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.type,catMeta(t.cat).l,t.amount,(t.note||'').replace(/"/g,'\\"')]));const csv=rows.map(r=>r.map(v=>'"'+String(v)+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='moneylens-'+todayStr()+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);toast('CSV downloaded')};
     const im=$('setImport');
-    if(im)im.addEventListener('change',ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);const inc=(j.transactions||j.tx||[]).filter(t=>t&&t.amount>0&&t.date);if(!inc.length){toast('No transactions found in that file');return}mergeTxns(inc,true,false);renderAll();toast('Import merged \u00b7 '+state.tx.length+' total')}catch(e){toast('Could not read that file')}};rd.readAsText(f);ev.target.value='';});
+    if(im)im.addEventListener('change',ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);const inc=(j.transactions||j.tx||[]).filter(t=>t&&t.amount>0&&t.date);if(!inc.length){toast('No transactions found in that file');return}mergeTxns(inc,true,false);try{const kf2=t=>t.id||[t.date,t.amount,t.type,t.note||''].join('|');inc.forEach(t=>{const r2=state.tx.find(x=>kf2(x)===kf2(t));if(r2)queuePush_(r2)})}catch(e2){};renderAll();toast('Import merged \u00b7 '+state.tx.length+' total')}catch(e){toast('Could not read that file')}};rd.readAsText(f);ev.target.value='';});
     const cl=$('setClear');
     if(cl)cl.onclick=()=>{if(!confirm('Clear all MoneyLens data in this browser? Transactions, budgets and settings will be wiped. Export first if you want a copy.'))return;const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(/^ml/.test(k)||k.indexOf('moneylens')>=0))ks.push(k)}ks.forEach(k=>localStorage.removeItem(k));location.reload()};
   })();

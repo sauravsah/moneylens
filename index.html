@@ -219,6 +219,7 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 #toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,90px);background:rgba(18,23,40,.92);backdrop-filter:blur(12px);border:1px solid var(--line2);color:var(--txt);padding:13px 22px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:200;transition:.4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 14px 50px rgba(0,0,0,.55);pointer-events:none;display:flex;align-items:center;gap:9px;opacity:0}
 #toast::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px rgba(139,124,255,.8)}
 #toast.show{transform:translate(-50%,0);opacity:1}
+.tundo{background:none;border:0;color:#8b7cff;font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;padding:2px 4px;pointer-events:auto;flex-shrink:0}
 .fab{display:none;position:fixed;bottom:calc(26px + env(safe-area-inset-bottom));right:22px;z-index:60;width:60px;height:60px;border-radius:50%;border:0;background:var(--grad);color:#fff;font-size:27px;cursor:pointer;box-shadow:0 12px 38px rgba(139,124,255,.55);transition:.25s}
 .fab:hover{transform:translateY(-3px)}
 .fab:active{transform:scale(.9)}
@@ -737,7 +738,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <div class="set-row" id="setCatList" style="margin-top:8px"></div>
         <div class="set-note">Custom categories work everywhere: tagging, filters, budgets and charts.</div>
       </div>
-      <div class="set-note" style="margin-top:16px">MoneyLens v3.8 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
+      <div class="set-note" style="margin-top:16px">MoneyLens v3.9 &middot; single-file app &middot; your data stays in this browser and syncs only through your own feed URL.</div>
     </section>
   </section>
   </main>
@@ -836,9 +837,11 @@ function matchCatLabel(text){
 }
 function saveQuickTag(id,cat,note){
   const t=state.tx.find(x=>x.id===id);if(!t)return;
+  const fn=note||t.note,ln=learnKey_(fn),learned0=ln?!!learnHit_(ln):false;
+  const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true};
   if(cat)t.cat=cat;if(note)t.note=note.slice(0,60);
-  t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(note||t.note,cat);save();renderAll();
-  toast('Tagged · '+CATS[t.cat].l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''));
+  t.review=false;t.m=true;queuePush_(t);if(cat)learnTag_(fn,cat);save();renderAll();
+  toast('Tagged · '+CATS[t.cat].l+(state.learn&&state.learn[learnKey_(t.note)]===t.cat?' · remembered':''),{prev:prev,note:fn,learnedNew:!!cat&&!learned0});
 }
 function qtagHtml(t){
   const cats=t.type==='income'?INC_CATS:EXP_CATS;
@@ -984,7 +987,7 @@ function mergeTxns(incoming,quiet,markReview){
     const k=key(t);
     if(seen.has(k)){
       const ex=state.tx.find(x=>key(x)===k);
-      if(ex){if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;}if(t.m&&!ex.m){if(t.cat)ex.cat=t.cat;if(t.note&&!genericNote_(t.note))ex.note=t.note;if(t.time&&!ex.time)ex.time=t.time;ex.m=true;ex.review=false;}}
+      if(ex){if(t.m===false&&ex.m===true){ex.cat=t.cat||ex.cat;ex.note=t.note||ex.note;ex.m=false;ex.review=(t.review==null)?true:!!t.review;return;}if(t.time&&!ex.time)ex.time=t.time;if(t.bank&&!ex.bank)ex.bank=t.bank;if(t.src&&!ex.src)ex.src=t.src;if(t.note&&!ex.m&&genericNote_(ex.note)&&!genericNote_(t.note)){ex.note=t.note;ex.cat=autoCat_(ex);ex.review=false;}if(t.m&&!ex.m){if(t.cat)ex.cat=t.cat;if(t.note&&!genericNote_(t.note))ex.note=t.note;if(t.time&&!ex.time)ex.time=t.time;ex.m=true;ex.review=false;}}
       return;
     }
     seen.add(k);
@@ -1033,7 +1036,7 @@ function load(){
 function save(){try{localStorage.setItem(LS,JSON.stringify({tx:state.tx,budgets:state.budgets,customCats:state.customCats,settings:state.settings,recIgnore:state.recIgnore,reports:state.reports||[],learn:state.learn||{}}))}catch(e){}}
 /* ---------- two-way sync: push local changes up to the feed ---------- */
 const PUSHQ='ml_pushq';
-function queuePush_(t){try{if(!t||!t.id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const row={id:t.id,date:t.date,amount:t.amount,type:t.type,note:t.note,cat:t.cat,m:true,review:false,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||''};const ix=q.findIndex(x=>!x.del&&x.id===row.id);if(ix>=0)q[ix]=row;else q.push(row);localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
+function queuePush_(t){try{if(!t||!t.id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const row={id:t.id,date:t.date,amount:t.amount,type:t.type,note:t.note,cat:t.cat,m:!!t.m,review:!!t.review,time:t.time||'',bank:t.bank||'',src:t.src||'',ref:t.ref||''};const ix=q.findIndex(x=>!x.del&&x.id===row.id);if(ix>=0)q[ix]=row;else q.push(row);localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
 function queueDel_(id){try{if(!id||!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');q.push({del:id});localStorage.setItem(PUSHQ,JSON.stringify(q.slice(-300)))}catch(e){}}
 function flushPush_(){try{if(!SYNC_URL)return;const q=JSON.parse(localStorage.getItem(PUSHQ)||'[]');if(!q.length)return;const tags=q.filter(x=>!x.del).slice(0,50);const dels=q.filter(x=>x.del).slice(0,50);if(!tags.length&&!dels.length)return;const clear=()=>{try{const q2=JSON.parse(localStorage.getItem(PUSHQ)||'[]');const keep=q2.filter(x=>{if(x.del)return!dels.some(d=>d.del===x.del);return!tags.some(t=>t.id===x.id)});localStorage.setItem(PUSHQ,JSON.stringify(keep))}catch(e){}};const sendDels=()=>{if(!dels.length)return;fetch(SYNC_URL,{method:'POST',body:JSON.stringify({push:'del',ids:dels.map(d=>d.del)})}).then(r=>r.json()).then(j=>{if(j&&j.ok)clear()}).catch(()=>{})};if(tags.length)fetch(SYNC_URL,{method:'POST',body:JSON.stringify({push:'txns',txns:tags})}).then(r=>r.json()).then(j=>{if(j&&j.ok){clear();sendDels()}}).catch(()=>{});else sendDels()}catch(e){}}
 
@@ -1420,7 +1423,7 @@ function saveTx(){
   if(!$('mDate').value){toast('Pick a date');return}
   const type=document.querySelector('#segType button.on').dataset.t;
   const data={type,amount:amt,cat:$('mCat').value,date:$('mDate').value,note:$('mNote').value.trim()};
-  if(editingId){const t=state.tx.find(x=>x.id===editingId);Object.assign(t,data);t.review=false;t.m=true;queuePush_(t);if(data.cat)learnTag_(data.note||t.note,data.cat);toast('Updated')}
+  if(editingId){const t=state.tx.find(x=>x.id===editingId);const fn=data.note||t.note,ln=learnKey_(fn),learned0=ln?!!learnHit_(ln):false;const prev={id:t.id,cat:t.cat,note:t.note,m:!!t.m,rev:t.review!=null?!!t.review:true};Object.assign(t,data);t.review=false;t.m=true;queuePush_(t);if(data.cat)learnTag_(fn,data.cat);toast('Updated',{prev:prev,note:fn,learnedNew:!!data.cat&&!learned0})}
   else{const nt={id:uid(),...data};state.tx.push(nt);queuePush_(nt);toast(type==='income'?'Income added 🎉':'Expense added')}
   save();
   state.ui.month=mKey(data.date);
@@ -1430,7 +1433,9 @@ function delTx(){if(!editingId)return;queueDel_(editingId);state.tx=state.tx.fil
 
 /* ---------- toast / tooltip ---------- */
 let toastT;
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900)}
+let undoSnap=null;
+function toast(msg,undo){const t=$('toast');t.innerHTML='';const s=document.createElement('span');s.textContent=msg;t.appendChild(s);undoSnap=undo||null;if(undoSnap){const b=document.createElement('button');b.className='tundo';b.textContent='Undo';b.onclick=()=>{const u=undoSnap;undoSnap=null;t.classList.remove('show');doUndo_(u)};clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),6000)}else{clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900)}}
+function doUndo_(u){if(!u||!u.prev)return;const t=state.tx.find(x=>x.id===u.prev.id);if(!t)return;t.cat=u.prev.cat;t.note=u.prev.note;t.m=u.prev.m;t.review=u.prev.rev;if(u.learnedNew&&u.note){const lk=learnKey_(u.note);if(lk&&state.learn&&state.learn[lk])delete state.learn[lk]}queuePush_(t);save();renderAll();toast('Reverted')}
 const tip=$('tip');
 function showTip(x,y,text){tip.textContent=text;tip.style.opacity=1;tip.style.left=Math.min(x+14,innerWidth-160)+'px';tip.style.top=(y-38)+'px'}
 function hideTip(){tip.style.opacity=0}

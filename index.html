@@ -178,13 +178,14 @@ select option,select optgroup{background:#15151f;color:#e8eaf0}
 .ql{font-size:10px;color:var(--acc2);font-weight:800;letter-spacing:1.4px;text-transform:uppercase}
 .qtag .chip{padding:5px 11px;font-size:11.5px}
 .qin{background:var(--surface);border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:7px 11px;font-size:12.5px;font-family:inherit;min-width:160px;flex:1;outline:none;transition:.2s}
-.qin:focus{border-color:var(--acc1);box-shadow:0 0 0 3px rgba(139,124,255,.18)}
+.qin:focus{border-color:var(--acc1);box-shadow:0 0 0 3px rgba(139,124,255,.18)}.qtag .qsel{appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--line);border-radius:99px;color:var(--mut);padding:5px 24px 5px 11px;font-size:11.5px;font-weight:600;font-family:inherit;cursor:pointer;outline:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 13px) 50%,calc(100% - 9px) 50%;background-size:4px 4px;background-repeat:no-repeat}.qtag .qsel:focus{border-color:var(--acc1)}.qtag .qsel option{background:#141428;color:#e8e8f4;font-size:13px}
 @media(max-width:560px){
   .tx{padding:10px 11px;gap:10px}
   .qtag{gap:8px;margin-top:9px;padding-top:9px}
   .qtag .chip{padding:9px 13px;font-size:12.5px}
   .qtag button[data-cat]:nth-of-type(n+9){display:none}
   .qin{flex:1 1 100%;min-width:0;padding:11px 12px;font-size:16px}
+  .qtag .qsel{flex:1 1 100%;height:40px;font-size:16px;margin:0}
   .field input,.field select{font-size:16px}
   .seg button{padding:11px}
   .modal{padding:22px 18px;border-radius:22px}
@@ -847,6 +848,11 @@ function qtagHtml(t){
   const cats=t.type==='income'?INC_CATS:EXP_CATS;
   let h='<div class="qtag"><span class="ql">Tag it</span>';
   cats.forEach(k=>{h+='<button class="chip" data-cat="'+k+'">'+CATS[k].i+' '+CATS[k].l+'</button>'});
+  h+='<select class="qsel" title="All categories">';
+  h+='<option value="" disabled selected hidden>\u25be All categories</option>';
+  h+='<option value="__new">\uff0b Add this category\u2026</option>';
+  cats.forEach(k=>{h+='<option value="'+k+'">'+CATS[k].i+' '+CATS[k].l+'</option>'});
+  h+='</select>';
   h+='<input class="qin" type="text" placeholder="Type what it was spent on…">';
   h+='<button class="chip" data-act="qsave">Save</button>';
   h+='<button class="chip" data-act="qnew" style="display:none">Create</button></div>';
@@ -1686,8 +1692,24 @@ function init(){
   });
   $('txList').addEventListener('keydown',e=>{
     if(e.key!=='Enter')return;const inp=e.target.closest('.qin');if(!inp)return;
-    e.preventDefault();inp.closest('.qtag').querySelector('[data-act="qsave"]').click();
   });
+  $('txList').addEventListener('change',e=>{
+    const sel=e.target.closest('.qsel');if(!sel)return;
+    const row=e.target.closest('.tx');if(!row)return;
+    const t=state.tx.find(x=>x.id===row.dataset.tid);if(!t||!t.review)return;
+    const inp=row.querySelector('.qin');const txt=inp?inp.value.trim():'';
+    const v=sel.value;sel.value='';if(!v)return;
+    if(v==='__new'){
+      let nm=txt;
+      if(nm.length<2)nm=(window.prompt('New category name')||'').trim();
+      if(!nm||nm.length<2){toast('Type the category name first');return}
+      const slug=makeCat(nm,t.type);save();
+      saveQuickTag(t.id,slug,nm);
+    }else{
+      saveQuickTag(t.id,v,txt);
+    }
+  });
+
   const salSel=$('salDay');
   salSel.innerHTML='<option value="0">Calendar month</option>'+Array.from({length:28},(x,i)=>'<option value="'+(i+1)+'">'+(i+1)+'</option>').join('');
   salSel.value=String(state.settings.salaryDay||0);

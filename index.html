@@ -774,7 +774,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
     <div class="field"><label>Amount (&#8377;)</label><input id="mAmt" type="number" min="0" step="1" placeholder="0" inputmode="decimal"></div>
     <div class="field"><label>Category</label><select id="mCat"></select></div>
     <div class="field"><label>Date</label><input id="mDate" type="date"></div>
-    <div class="field"><label style="display:flex;align-items:center;gap:7px"><input id="mSplit" type="checkbox">\ud83d\udc65 Split bill</label><span id="mSplitBox" style="display:none;align-items:center;gap:5px;font-size:13px">total \u20b9<input id="mSTot" type="number" min="1" inputmode="decimal" style="max-width:88px"> \u00b7 my share \u20b9<input id="mSShare" type="number" min="1" inputmode="decimal" style="max-width:88px"></span></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:7px"><input id="mSplit" type="checkbox">👥 Split bill</label><span id="mSplitBox" style="display:none;align-items:center;gap:5px;font-size:13px">total ₹<input id="mSTot" type="number" min="1" inputmode="decimal" style="max-width:88px"> · my share ₹<input id="mSShare" type="number" min="1" inputmode="decimal" style="max-width:88px"></span></div>
     <div class="field"><label>Note</label><input id="mNote" type="text" placeholder="e.g. groceries at BigBasket" maxlength="80"></div>
     <div class="acts">
       <button class="danger" id="mDel" style="display:none">Delete</button>
@@ -1540,7 +1540,7 @@ function openModal(t){
   $('mDate').value=t?t.date:(state.ui.month===mKey(todayStr())?todayStr():state.ui.month+'-01');
   $('mNote').value=t?t.note:'';
   $('mSplit').checked=!!(t&&t.split);$('mSplitBox').style.display=$('mSplit').checked?'inline-flex':'none';
-  $('mSTot').value=t?(t.split?t.split.total:t.amount):'';$('mSShare').value=t&&t.split?t.split.mine:'';
+  $('mSTot').value=t?(t.split?t.split.total:t.amount):'';$('mSShare').value=t&&t.split?t.split.mine:'';mShareAuto=false;
   $('overlay').classList.add('show');
   setTimeout(()=>$('mAmt').focus(),80);
 }
@@ -1738,7 +1738,7 @@ function init(){
     toast('Category \u201c'+nm.trim()+'\u201d added');
   });
   $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal()});
-  $('mSplit').addEventListener('change',()=>{$('mSplitBox').style.display=$('mSplit').checked?'inline-flex':'none'});
+  let mShareAuto=false;$('mSplit').addEventListener('change',()=>{$('mSplitBox').style.display=$('mSplit').checked?'inline-flex':'none';if($('mSplit').checked&&!$('mSShare').value){mShareAuto=true;$('mSShare').value=Math.round((+$('mSTot').value||0)/2)}});$('mSTot').addEventListener('input',()=>{if(mShareAuto||!$('mSShare').value){mShareAuto=true;$('mSShare').value=Math.round((+$('mSTot').value||0)/2)}});$('mSShare').addEventListener('input',()=>{mShareAuto=false});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&$('overlay').classList.contains('show'))saveTx()});
   
   $('txList').addEventListener('click',e=>{

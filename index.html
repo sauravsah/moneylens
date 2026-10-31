@@ -706,6 +706,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <div class="set-box"><label>Monthly take-home (&#8377;)</label><input id="setIncome" type="number" min="0" placeholder="e.g. 58240"></div>
         <div class="set-box"><label>Cycle starts on</label><select id="setSalDay"></select></div>
       </div>
+      <div class="set-row" style="margin-top:14px"><button class="chip" id="setPrefsSave">Save</button><span class="sm" style="align-self:center">Applies to the 50/30/20 guide and salary-cycle budgets</span></div>
       <div class="set-box" style="margin-top:14px">
         <label>Sync feed</label>
         <div class="set-row"><input id="setFeed" type="url" placeholder="https://script.google.com/..." style="flex:1;min-width:220px"><button class="chip" id="setFeedSave">Save</button></div>
@@ -1439,7 +1440,7 @@ function renderBudgets(){
     const n=state.tx.filter(t=>inWin(t)&&t.type==='expense'&&t.cat===cat&&!isPending_(t)).length;
     tb+=b;ts+=s;return{cat,b,s,n};
   });
-  const inc=sum(t=>inWin(t)&&t.type==='income')||(function(){try{return +(localStorage.getItem('ml_income')||0)}catch(e){return 0}})();
+  const inc=(function(){try{return +(localStorage.getItem('ml_income')||0)}catch(e){return 0}})()||sum(t=>inWin(t)&&t.type==='income');
   const sv=inc-ts,rate=inc>0?Math.round(Math.max(0,sv)/inc*100):0;
   $('budSum').innerHTML=`${win.label} · <b>${fmtk(ts)}</b> of <b>${fmtk(tb)}</b> spent`;
   const g=$('budGuide');
@@ -1577,7 +1578,11 @@ function settingsPopInit(){
   const sb=$('setBody'),ss=$('secSettings');
   if(sb&&ss&&!sb.contains(ss))sb.appendChild(ss);
   const ov=$('setOverlay');
-  const open=()=>{if(ov){ov.classList.add('on');try{renderReports()}catch(e){}}};
+  const open=()=>{if(ov){ov.classList.add('on');try{renderReports()}catch(e){}
+    try{const si2=$('setIncome');if(si2)si2.value=localStorage.getItem('ml_income')||''}catch(e){}
+    try{const sf2=$('setFeed');if(sf2)sf2.value=localStorage.getItem('ml_feed_url')||''}catch(e){}
+    try{const ss2=$('setSalDay');if(ss2&&ss2.options.length)ss2.value=String(state.settings.salaryDay||0)}catch(e){}
+  }};
   const close=()=>{if(ov)ov.classList.remove('on')};
   const sp=$('setPop');if(sp)sp.onclick=open;
   const scl=$('setClose');if(scl)scl.onclick=close;
@@ -1616,11 +1621,18 @@ function init(){
     if(si){try{si.value=localStorage.getItem('ml_income')||''}catch(e){}
       si.addEventListener('change',()=>{const v=Math.max(0,+si.value||0);try{localStorage.setItem('ml_income',String(v))}catch(e){}renderBudgets();toast(v?'Take-home saved':'Take-home cleared')});}
     const ssd=$('setSalDay'),sd=$('salDay');
-    if(ssd&&sd){
-      for(let i=1;i<=28;i++){const o=document.createElement('option');o.value=i;o.textContent='Day '+i;ssd.appendChild(o)}
-      ssd.value=sd.value||'1';
-      ssd.addEventListener('change',()=>{sd.value=ssd.value;sd.dispatchEvent(new Event('change'));toast('Cycle start updated')});
-      sd.addEventListener('change',()=>{try{ssd.value=sd.value}catch(e){}});
+    if(ssd){
+      for(let i=0;i<=28;i++){const o=document.createElement('option');o.value=i;o.textContent=i===0?'Calendar month':'Day '+i;ssd.appendChild(o)}
+      try{ssd.value=String(state.settings.salaryDay||0)}catch(e){}
+      ssd.addEventListener('change',()=>{if(sd){sd.value=ssd.value;try{sd.dispatchEvent(new Event('change'))}catch(e){}}});
+      if(sd)sd.addEventListener('change',()=>{try{ssd.value=sd.value}catch(e){}});
+      const sps=$('setPrefsSave');
+      if(sps)sps.addEventListener('click',()=>{
+        const v=Math.max(0,+$('setIncome').value||0);
+        try{localStorage.setItem('ml_income',String(v))}catch(e){}
+        state.settings.salaryDay=+(ssd.value||0);
+        if(sd&&sd.options.length)sd.value=ssd.value;
+        save();renderBudgets();toast('Settings saved');});
     }
     const sf=$('setFeed');
     if(sf){try{sf.value=localStorage.getItem('ml_feed_url')||''}catch(e){}}

@@ -1025,6 +1025,47 @@ function dedupeSync_(list){
     save();renderAll();toast('Cleaned '+drop.size+' duplicate row'+(drop.size===1?'':'s'));
   }catch(e){}
 }
+function sameDayish_(a,b){return !a||!b||a===b}
+function reconcileSync_(list,quiet){
+  try{
+    if(!Array.isArray(list)||!list.length)return 0;
+    const feedById={};list.forEach(t=>{if(t&&t.id)feedById[t.id]=t});
+    const next=[];let dropped=0,pushed=0;
+    list.forEach(t=>{
+      if(!t||!t.id)return;
+      const row=Object.assign({},t);
+      const ex=state.tx.find(x=>x&&x.id===t.id&&x.m)||state.tx.find(x=>x&&x.id===t.id);
+      if(ex){
+        if(ex.m&&!row.m){row.m=true;row.cat=ex.cat||row.cat;row.review=false;if(ex.note&&!genericNote_(ex.note))row.note=ex.note;queuePush_(row);pushed++}
+        if(!row.time&&ex.time)row.time=ex.time;
+        if(!row.bank&&ex.bank)row.bank=ex.bank;
+        if(!row.src&&ex.src)row.src=ex.src;
+      }
+      next.push(row);
+    });
+    state.tx.forEach(ex=>{
+      if(!ex)return;
+      if(ex.id&&feedById[ex.id])return;
+      const src=ex.src||'';
+      if(src==='email'||src==='sms'){
+        const F=list.find(t=>t&&t.id&&t.amount>0&&t.type===ex.type&&Math.abs((t.amount||0)-(ex.amount||0))<0.5&&(!t.bank||!ex.bank||t.bank===ex.bank)&&(!t.ref||!ex.ref||t.ref===ex.ref)&&timeClose_(t.time,ex.time)&&sameDayish_(t.date,ex.date));
+        if(F){const row=next.find(x=>x.id===F.id);if(row&&ex.m&&!row.m){row.m=true;row.cat=ex.cat||row.cat;row.review=false;if(ex.note&&!genericNote_(ex.note))row.note=ex.note;queuePush_(row);pushed++}dropped++;return}
+        if(!ex.m){dropped++;return}
+        next.push(Object.assign({},ex));if(ex.id){queuePush_(ex);pushed++}return;
+      }
+      next.push(Object.assign({},ex));
+      if(ex.m&&ex.id){queuePush_(ex);pushed++}
+    });
+    const key=t=>[t.id,t.cat,t.note,t.m,t.review,t.amount,t.date,t.type,t.time,t.bank,t.src,t.ref].join('|');
+    const before=state.tx.map(key).join('\n'),after=next.map(key).join('\n');
+    const changed=before!==after;
+    if(!changed&&!pushed&&!dropped)return 0;
+    if(changed){state.tx=next;save();renderAll()}
+    if(dropped&&!quiet)toast('Cleaned '+dropped+' stray row'+(dropped===1?'':'s'));
+    if(pushed)flushPush_();
+    return changed?1:0;
+  }catch(e){return 0}
+}
 function notifyNew(list){
   const fresh=(list||[]).filter(t=>t&&t.review);
   if(!fresh.length||!('Notification' in window)||Notification.permission!=='granted')return;
@@ -1665,7 +1706,7 @@ function init(){
     fetch(SYNC_URL+'?t='+Date.now()).then(r=>r.json()).then(j=>{
       const list=Array.isArray(j)?j:(j.transactions||[]);
       const known=new Set(state.tx.map(t=>t.id));
-      if(mergeTxns(list,true,true)){save();notifyNew(list.filter(t=>t&&t.id&&!known.has(t.id)))}dedupeSync_(list);
+      if(reconcileSync_(list,true)){notifyNew(list.filter(t=>t&&t.id&&!known.has(t.id)))}
       purgeDemo_();
       if(Array.isArray(j.reports)){const nr=j.reports.filter(r=>r&&r.text);const prev=JSON.stringify(state.reports||[]);state.reports=nr.slice(-20).reverse();if(JSON.stringify(state.reports)!==prev){save();renderReports()}}
     }).catch(()=>{});

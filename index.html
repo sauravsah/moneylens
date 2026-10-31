@@ -1114,6 +1114,7 @@ function syncAlertBtn(){
   b.textContent=pn==='granted'?'alerts on':(pn==='denied'?'alerts blocked':'turn on alerts');
 }
 function load(){
+  state.ui.month=state.ui.month||mKey(todayStr());
   try{
     const raw=localStorage.getItem(LS);
     if(raw){
@@ -1379,7 +1380,7 @@ function drawBars(){
     ctx.fillText(MON[+k.split('-')[1]-1],cx,h-8);
   });
 }
-function catMeta(c){if(c==='__untag')return{l:'Untagged',i:'\ud83c\udfe9',c:'#94a3b8'};return CATS[c]||{l:'Other',i:'\u2753',c:'#94a3b8'}}
+function catMeta(c){if(c==='__untag')return{l:'Untagged',i:'\ud83c\udff3\ufe0f',c:'#94a3b8'};return CATS[c]||{l:'Other',i:'\u2753',c:'#94a3b8'}}
 function centerFull(){
   const D=window._donut;if(!D)return;
   const ltot=state.tx.filter(t=>mKey(t.date)===monthShift(D.key,-1)&&t.type==='expense').reduce((s,t)=>s+t.amount,0);

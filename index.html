@@ -710,11 +710,16 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
         <button class="chip" id="recThSave">Save limits</button>
       </div>
       <div class="set-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+        <input id="recAddName" list="recBankList" type="text" placeholder="Add a bank you use (e.g. SBI)" style="flex:1;min-width:200px" autocomplete="off">
+        <datalist id="recBankList"></datalist>
+        <button class="chip" id="recAddBtn">Add bank</button>
+      </div>
+      <div id="recRows"></div>
+      <div class="set-row" style="margin-top:12px;gap:8px;flex-wrap:wrap">
         <input id="recNote" type="text" placeholder="Month note (e.g. Diwali spend heavy)" style="flex:1;min-width:220px">
         <button class="chip" id="recNoteSave">Save note</button>
       </div>
-      <div id="recRows"></div>
-      <div id="recSum" class="sm" style="margin-top:12px;line-height:1.7"></div>
+      
     </section>
   </section>
 
@@ -1657,13 +1662,13 @@ function settingsPopInit(){
   if(ov)ov.addEventListener('click',e=>{if(e.target===ov)close()});
 }
 /* ---------- 06 month-end reconcile ---------- */
-const RECON_DEF={tol:100,serious:500,anchor:{},recs:{},mnotes:{}};
-function reconDefs_(){state.recon=Object.assign({},RECON_DEF,state.recon||{});state.recon.recs=state.recon.recs||{};state.recon.mnotes=state.recon.mnotes||{};state.recon.anchor=state.recon.anchor||{};return state.recon}
+const RECON_DEF={tol:100,serious:500,anchor:{},recs:{},mnotes:{},accts:[]};
+function reconDefs_(){state.recon=Object.assign({},RECON_DEF,state.recon||{});state.recon.recs=state.recon.recs||{};state.recon.mnotes=state.recon.mnotes||{};state.recon.anchor=state.recon.anchor||{};if(!Array.isArray(state.recon.accts)||!state.recon.accts.length){const ks=[];Object.keys(state.recon.recs||{}).forEach(k=>{const a=k.slice(k.indexOf('|')+1);if(a&&a!=='other'&&!ks.includes(a))ks.push(a)});state.recon.accts=ks}return state.recon}
 function fmtINR_(n){n=Math.round(Number(n)||0);return (n<0?'\u2212\u20b9':'\u20b9')+Math.abs(n).toLocaleString('en-IN')}
 function monthAdd_(ym,n){const y=+ym.slice(0,4),m=+ym.slice(5);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)}
 function monthLabel_(ym){return new Date(+ym.slice(0,4),+ym.slice(5)-1,1).toLocaleString('en',{month:'long',year:'numeric'})}
-function reconAccts_(){const set={};state.tx.forEach(t=>{const b=(t.bank||'').toLowerCase().trim();if(b)set[b]=1});let ks=Object.keys(set);if(!ks.length)ks=['idfc','sbi','hdfc'];return ks.sort()}
-function reconNet_(a,ym){let n=0;state.tx.forEach(t=>{if(mKey(t.date)!==ym)return;const b=(t.bank||'').toLowerCase().trim();const ok=a==='other'?!b:b===a;if(ok)n+=(t.type==='income'?1:-1)*(Number(t.amount)||0)});return n}
+function reconBankOpts_(){const set={};state.tx.forEach(t=>{const b=(t.bank||'').toLowerCase().trim();if(b)set[b]=1});return Array.from(new Set(Object.keys(BANKS).concat(Object.keys(set))))}
+function reconNet_(a,ym){let n=0;state.tx.forEach(t=>{if(mKey(t.date)!==ym)return;const b=(t.bank||'').toLowerCase().trim();if(b!==a)return;n+=(t.type==='income'?1:-1)*(Number(t.amount)||0)});return n}
 function reconPrev_(a,ym){let best=null;const recs=state.recon.recs||{};Object.keys(recs).forEach(k=>{const i=k.indexOf('|');const m=k.slice(0,i),aa=k.slice(i+1);if(aa!==a||m>=ym)return;if(!best||m>best.m)best={m:m,r:recs[k]}});return best}
 function reconOpening_(a,ym){
   const p=reconPrev_(a,ym);if(p)return{v:Number(p.r.a)||0,src:'carried from '+p.m};
@@ -1678,10 +1683,21 @@ function reconBoot_(){
   const m=$('recMonth');if(m)m.onchange=()=>renderRecon();
   const t=$('recThSave');if(t)t.onclick=()=>{const R=reconDefs_();R.tol=Math.max(0,Number($('recTol').value)||0);const s=Math.max(R.tol,Number($('recSer').value)||R.tol);R.serious=s;save();renderRecon();toast('Limits saved')};
   const n=$('recNoteSave');if(n)n.onclick=()=>{const R=reconDefs_();const ym=$('recMonth').value;R.mnotes[ym]=String($('recNote').value||'').slice(0,140);save();renderRecon();toast('Note saved')};
+  const ab=$('recAddBtn');if(ab)ab.onclick=reconAddBank_;
+  const ai=$('recAddName');if(ai)ai.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();reconAddBank_()}});
   renderRecon();
 }
+function reconAddBank_(){
+  const inp=$('recAddName');if(!inp)return;const slug=inp.value.toLowerCase().trim();
+  if(!slug){toast('Type a bank name first');return}
+  const R=reconDefs_();R.accts=R.accts||[];
+  if(R.accts.includes(slug)){toast('Already added');return}
+  R.accts.push(slug);save();inp.value='';renderRecon();toast('Added '+(BANKS[slug]||slug.toUpperCase()))
+}
+function reconRemoveBank_(a){const R=reconDefs_();R.accts=(R.accts||[]).filter(x=>x!==a);save();renderRecon();toast('Removed from the check')}
 function renderRecon(){
   const wrap=$('recRows');if(!wrap)return;const R=reconDefs_();
+  const dl=$('recBankList');if(dl)dl.innerHTML=reconBankOpts_().map(b=>'<option value="'+b+'">').join('');
   const tl=$('recTol');if(tl&&document.activeElement!==tl)tl.value=R.tol;
   const sr=$('recSer');if(sr&&document.activeElement!==sr)sr.value=R.serious;
   const ms=reconMonthList_();const sel=$('recMonth');
@@ -1689,18 +1705,18 @@ function renderRecon(){
   if(sel){const pv=sel.value;sel.innerHTML=ms.map(k=>'<option value="'+k+'">'+monthLabel_(k)+'</option>').join('');sel.value=ms.includes(pv)?pv:def}
   const ym=sel?sel.value:def;
   const noteIn=$('recNote');if(noteIn&&document.activeElement!==noteIn)noteIn.value=R.mnotes[ym]||'';
-  const accts=reconAccts_();const others=state.tx.some(t=>mKey(t.date)===ym&&!(t.bank||'').trim());
-  const all=accts.concat(others?['other']:[]);
+  const accts=R.accts||[];
   let html='';let verified=0,carry=0;
-  all.forEach(a=>{
-    const name=a==='other'?'Not bank-tagged':(BANKS[a]||a.toUpperCase());
+  if(!accts.length)html='<div class="sm" style="margin-top:12px;color:var(--mut2)">No banks added yet. Add the ones you actually use above, then enter each one\u2019s balance at month end.</div>';
+  accts.forEach(a=>{
+    const name=BANKS[a]||a.toUpperCase();
     const op=reconOpening_(a,ym);const net=reconNet_(a,ym);const rec=R.recs[ym+'|'+a];
     let row='<div class="set-box" style="margin-top:12px;padding:12px;border:1px solid rgba(128,128,128,.25);border-radius:12px">';
-    row+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><strong>'+name+'</strong>';
+    row+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><strong>'+name+'</strong><span style="display:flex;gap:8px;align-items:center">';
     if(rec)row+='<span style="font-size:12px;color:#16a34a">\u2713 verified '+new Date(rec.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})+'</span>';
-    row+='</div>';
+    row+='<button class="chip recDel" data-a="'+a+'" title="Remove from the check" style="padding:2px 9px">\u2715</button></span></div>';
     if(op){row+='<div class="sm" style="margin-top:4px;color:var(--mut2)">MoneyLens expects '+fmtINR_(op.v+net)+' at month end ('+op.src+', '+(net>=0?'+'+fmtINR_(net):fmtINR_(net))+' tracked this month)</div>'}
-    else{row+='<div class="sm" style="margin-top:4px;color:var(--mut2)">No starting balance yet. Enter it once below (from your statement for the 1st of this month) and every later month carries over automatically.</div>'}
+    else{row+='<div class="sm" style="margin-top:4px;color:var(--mut2)">No starting balance yet. Enter it once below (from your statement for the 1st) and later months carry over automatically.</div>'}
     row+='<div class="set-row" style="margin-top:8px;gap:8px;flex-wrap:wrap">';
     if(!op)row+='<span class="sm" style="align-self:center">Starting balance</span><input class="recOp" data-a="'+a+'" type="number" style="width:130px" placeholder="\u20b9 on day 1">';
     row+='<span class="sm" style="align-self:center">Actual balance</span><input class="recAct" data-a="'+a+'" type="number" style="width:140px" placeholder="\u20b9 on last day" value="'+(rec?rec.a:'')+'">';
@@ -1715,14 +1731,15 @@ function renderRecon(){
   wrap.innerHTML=html;
   wrap.querySelectorAll('.recSave').forEach(b=>b.onclick=()=>reconSave_(b.dataset.a,ym,false));
   wrap.querySelectorAll('.recEdit').forEach(b=>b.onclick=()=>reconSave_(b.dataset.a,ym,true));
+  wrap.querySelectorAll('.recDel').forEach(b=>b.onclick=()=>reconRemoveBank_(b.dataset.a));
   const sum=$('recSum');
   if(sum){let s='';
-    if(all.length&&verified===all.length){s='<strong>'+monthLabel_(ym)+' verified.</strong> Net across accounts: '+fmtINR_(carry)+' carried into '+monthLabel_(monthAdd_(ym,1))+' as the starting balance.'+(R.mnotes[ym]?' Note: \u201c'+R.mnotes[ym]+'\u201d':'')}
-    else if(all.length){s=verified+' of '+all.length+' accounts verified for '+monthLabel_(ym)+'. Once all are in, the month is locked in and its savings carry over.'}
-    else{s='Add transactions first \u2014 accounts are derived from your feed.'}
+    if(!accts.length)s='Add a bank above to start the check. Everything stays in this browser.';
+    else if(verified===accts.length){s='<strong>'+monthLabel_(ym)+' verified.</strong> Net across banks: '+fmtINR_(carry)+' carried into '+monthLabel_(monthAdd_(ym,1))+' as the starting balance.'+(R.mnotes[ym]?' Note: \u201c'+R.mnotes[ym]+'\u201d':'')}
+    else{s=verified+' of '+accts.length+' banks verified for '+monthLabel_(ym)+'. Once all are in, the month is locked in and its savings carry over.'}
     const done=[];Object.keys(R.recs).forEach(k=>{const i=k.indexOf('|');const m=k.slice(0,i);if(!done.includes(m))done.push(m)});done.sort().reverse();
     const past=done.filter(m=>m<ym).slice(0,6);
-    if(past.length){s+='<div style="margin-top:10px"><strong>Verified history (diff per account)</strong><br>'+past.map(m=>{const parts=all.filter(a=>R.recs[m+'|'+a]).map(a=>{const nm=a==='other'?'Other':(BANKS[a]||a.toUpperCase());return nm+' '+fmtINR_(R.recs[m+'|'+a].d)});return monthLabel_(m)+': '+parts.join(' \u00b7 ')}).join('<br>')+'</div>'}
+    if(past.length){s+='<div style="margin-top:10px"><strong>Verified history (diff per bank)</strong><br>'+past.map(m=>{const parts=accts.filter(a=>R.recs[m+'|'+a]).map(a=>{const nm=BANKS[a]||a.toUpperCase();return nm+' '+fmtINR_(R.recs[m+'|'+a].d)});return monthLabel_(m)+': '+parts.join(' \u00b7 ')}).join('<br>')+'</div>'}
     sum.innerHTML=s;
   }
 }
@@ -1743,7 +1760,6 @@ function reconSave_(a,ym,clear){
   const rec=R.recs[ym+'|'+a];const v=reconVerdict_(rec.d,R.tol,R.serious);
   toast(v==='ok'?'Verified \u2014 within tolerance':v==='review'?'Saved \u2014 gap of '+fmtINR_(rec.d)+', worth a look':'Saved \u2014 gap of '+fmtINR_(rec.d)+', that is a serious gap, audit before carrying on');
 }
-
 
 function init(){
   load();

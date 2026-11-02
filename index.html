@@ -1663,7 +1663,7 @@ function settingsPopInit(){
 }
 /* ---------- 06 month-end reconcile ---------- */
 const RECON_DEF={tol:100,serious:500,anchor:{},recs:{},mnotes:{},accts:[]};
-function reconDefs_(){state.recon=Object.assign({},RECON_DEF,state.recon||{});state.recon.recs=state.recon.recs||{};state.recon.mnotes=state.recon.mnotes||{};state.recon.anchor=state.recon.anchor||{};if(!Array.isArray(state.recon.accts)||!state.recon.accts.length){const ks=[];Object.keys(state.recon.recs||{}).forEach(k=>{const a=k.slice(k.indexOf('|')+1);if(a&&a!=='other'&&!ks.includes(a))ks.push(a)});state.recon.accts=ks}return state.recon}
+function reconDefs_(){state.recon=Object.assign({},RECON_DEF,state.recon||{});state.recon.recs=state.recon.recs||{};state.recon.mnotes=state.recon.mnotes||{};state.recon.anchor=state.recon.anchor||{};if(!Array.isArray(state.recon.accts)){const ks=[];Object.keys(state.recon.recs||{}).forEach(k=>{const a=k.slice(k.indexOf('|')+1);if(a&&a!=='other'&&!ks.includes(a))ks.push(a)});state.recon.accts=ks}return state.recon}
 function fmtINR_(n){n=Math.round(Number(n)||0);return (n<0?'\u2212\u20b9':'\u20b9')+Math.abs(n).toLocaleString('en-IN')}
 function monthAdd_(ym,n){const y=+ym.slice(0,4),m=+ym.slice(5);const d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)}
 function monthLabel_(ym){return new Date(+ym.slice(0,4),+ym.slice(5)-1,1).toLocaleString('en',{month:'long',year:'numeric'})}

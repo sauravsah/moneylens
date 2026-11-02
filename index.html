@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#05070f">
 <title>MoneyLens · Personal Finance, on Autopilot</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -48,6 +52,7 @@ header{
 header.scrolled{border-bottom-color:var(--line);background:rgba(5,7,15,.82)}
 .logo{font-family:var(--font-d);font-weight:700;font-size:21px;letter-spacing:-.6px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;display:flex;align-items:baseline;gap:9px}
 .logo span{font-family:'Inter';font-weight:500;font-size:10.5px;display:block;color:var(--mut);-webkit-text-fill-color:var(--mut);letter-spacing:1.6px;text-transform:uppercase}
+.logo svg{width:30px;height:30px;align-self:center;flex-shrink:0;filter:drop-shadow(0 0 12px rgba(139,124,255,.35))}
 .month-nav{display:flex;align-items:center;gap:6px;margin-left:auto;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px}
 .month-nav button{background:transparent;border:0;color:var(--txt);font-size:16px;border-radius:99px;cursor:pointer;transition:.2s}#prevM,#nextM{width:34px;height:34px}#todayM{width:auto;height:auto;font-size:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
 .month-nav button:hover{background:var(--surface2);transform:scale(1.06)}
@@ -455,7 +460,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 <div class="bg-orb b1"></div><div class="bg-orb b2"></div><div class="bg-orb b3"></div>
 
 <section id="landing" class="view">
-  <nav class="land-nav"><div class="logo">Money<span>Lens</span></div><button class="land-cta" id="ctaStart">Get started</button></nav>
+  <nav class="land-nav"><div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="mlgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#38bdf8"/></linearGradient></defs><circle cx="32" cy="34" r="16.5" fill="none" stroke="url(#mlgA)" stroke-width="5"/><polyline points="21.5,42 28.5,35.5 33.5,38.5 43.5,25.5" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="43.5" cy="25.5" r="3.4" fill="#34d399"/></svg>Money<span>Lens</span></div><button class="land-cta" id="ctaStart">Get started</button></nav>
   <div class="lhero">
     <span class="eyebrow">Auto-synced personal finance</span>
     <h1>Your bank alerts,<br>turned into a <span class="grad">money story</span></h1>
@@ -490,7 +495,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 
 <section id="setup" class="view">
   <div class="setup-wrap">
-    <div class="setup-top"><div class="logo">Money<span>Lens</span></div></div>
+    <div class="setup-top"><div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="mlgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#38bdf8"/></linearGradient></defs><circle cx="32" cy="34" r="16.5" fill="none" stroke="url(#mlgB)" stroke-width="5"/><polyline points="21.5,42 28.5,35.5 33.5,38.5 43.5,25.5" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="43.5" cy="25.5" r="3.4" fill="#34d399"/></svg>Money<span>Lens</span></div></div>
     <div class="steps-dots"><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div></div>
     <div class="setup-card">
       <div class="step on">
@@ -572,7 +577,7 @@ body.side-open #sideBackdrop{opacity:1;pointer-events:auto}
 
 <div id="app" class="view">
 <header>
-  <div class="logo">MoneyLens<span>personal finance</span></div>
+  <div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="mlgC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#38bdf8"/></linearGradient></defs><circle cx="32" cy="34" r="16.5" fill="none" stroke="url(#mlgC)" stroke-width="5"/><polyline points="21.5,42 28.5,35.5 33.5,38.5 43.5,25.5" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="43.5" cy="25.5" r="3.4" fill="#34d399"/></svg>MoneyLens<span>personal finance</span></div>
   <div class="month-nav">
     <button id="prevM" aria-label="Previous month">&#8249;</button>
     <div id="monthLabel"></div>
